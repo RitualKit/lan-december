@@ -19,6 +19,11 @@ const MINIGAMES: Array[String] = [
 	"res://minigames/rockfall.gd",
 	"res://minigames/paint_the_isle.gd",
 	"res://minigames/koi_catch.gd",
+	"res://minigames/river_run.gd",
+	"res://minigames/snowball_fight.gd",
+	"res://minigames/stump_scramble.gd",
+	"res://minigames/color_call.gd",
+	"res://minigames/monster_bonk.gd",
 ]
 
 var players: Array[PlayerSlot] = []
@@ -26,6 +31,9 @@ var rounds_total := 10
 var round_number := 0 ## 1-based, 0 before the first round.
 var round_plan: Array[String] = []
 var rng := RandomNumberGenerator.new()
+## Forces every arena to one theme (screenshots/tests); "" = rotate through Themes.
+var theme_override := ""
+var _theme_bag: Array[String] = []
 ## Set by the main scene; used to switch screens.
 var main: Node
 
@@ -106,6 +114,16 @@ func plan_rounds() -> void:
 			if round_plan.size() < rounds_total:
 				round_plan.append(path)
 		last = round_plan[-1]
+
+
+## Next island theme, shuffle-bag style so consecutive rounds look different.
+func next_theme() -> String:
+	if theme_override != "":
+		return theme_override
+	if _theme_bag.is_empty():
+		_theme_bag = Themes.ORDER.duplicate()
+		_theme_bag.shuffle()
+	return _theme_bag.pop_back()
 
 
 func reset_scores() -> void:

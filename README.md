@@ -53,6 +53,25 @@ Everyone plays on one screen. Players use keyboards and gamepads, and CPU player
 | **Rockfall** | Dodge boulders that land on the red warning circles. | Dash |
 | **Paint the Isle** | Cover the most tiles in your colour. Paint bombs splash a big area. | Dash |
 | **Koi Catch** | Reaction duel: strike first when the koi bites. Pressing early locks you out for that cast. | Strike |
+| **River Run** | Cross the river three times (there, back, there) on drifting logs. Falling in sends you back to the bank you left. | Hop |
+| **Snowball Fight** | Every snowball hit is a point. Snow walls give cover. Always on Frost Peaks. | Throw |
+| **Stump Scramble** | Musical chairs: when the music stops, grab one of the stumps. There's one fewer than there are players. | Dash |
+| **Color Call** | A colour is called, and every other tile drops. Calls get faster, and later rounds add a fifth colour. | Dash |
+| **Monster Bonk** | Whack-a-mole: dash into monsters as they pop up. Gold ones are worth 3; fire spirits burn you for -2. | Dash |
+
+## Island themes
+
+Each round is played on one of five themes, picked so consecutive rounds look different:
+
+| Theme | Look |
+|---|---|
+| **Blossom Isles** | Spring grass, cherry trees, lily pads, falling petals |
+| **Maple Bay** | Golden grass, maple trees, pumpkins, falling leaves |
+| **Frost Peaks** | Snow, snowy pines, snowmen, drifting ice, snowfall |
+| **Sunny Atoll** | Sand, palm trees, a lighthouse, turquoise water |
+| **Lantern Night** | Moonlight, campfires, lamps, fireflies and rising sky lanterns |
+
+Every theme also has sailing boats, circling birds or jumping fish in the background, plus ground details such as grass tufts, flowers, shells and leaf piles. Themes are defined in `core/themes.gd`, and the moving scenery is in `core/scenery.gd`. A minigame can force a theme with `theme_name` (Snowball Fight always uses `"winter"`).
 
 ## Power-ups
 
@@ -108,7 +127,7 @@ tools/      run_tests.sh, capture.sh (screenshots)
 5. Override `rank()` to return groups of players, best first, for example `score_ranking(scores)`. The default ranks by who survived longest.
 6. Override `bot_input(ch)` so CPUs can play. Helpers available: `bot_go`, `bot_steer`, `bot_wander`, `nearest`, `bot_lined_up` and `bot_roll`.
 7. Add the path to `Game.MINIGAMES` in `autoload/game.gd`.
-8. Run the tests. Every minigame is automatically played to the end by CPUs with 2, 4 and 8 players.
+8. Run the tests. Every minigame is automatically played to the end by CPUs with 2, 4 and 8 players (`ONLY=minigames GAME=my_game tools/run_tests.sh` runs just yours).
 
 ## Tests
 

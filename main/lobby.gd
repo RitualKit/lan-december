@@ -15,6 +15,7 @@ var _count_label: Label
 
 func _init() -> void:
 	title = "Lobby"
+	theme_name = "blossom"
 	time_limit = 0.0
 	bump_power = 8.0
 

@@ -57,7 +57,7 @@ func _play_round(path: String) -> void:
 func _intro() -> void:
 	var card := _card()
 	var v: VBoxContainer = card.get_child(0)
-	v.add_child(Ui.label("ROUND %d / %d" % [Game.round_number, Game.rounds_total], 24, Color("b8b0c8"), 6))
+	v.add_child(Ui.label("ROUND %d / %d  ·  %s" % [Game.round_number, Game.rounds_total, String(minigame.arena.theme.label).to_upper()], 24, Color("b8b0c8"), 6))
 	if Game.multiplier() > 1:
 		var badge := Ui.label(">> DOUBLE POINTS <<", 30, Ui.GOLD, 8)
 		v.add_child(badge)

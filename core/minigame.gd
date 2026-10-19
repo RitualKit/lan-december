@@ -9,6 +9,7 @@ signal finished(ranking: Array)
 
 # --- Info shown on the intro card ---
 var title := "Minigame"
+var theme_name := "" ## Island theme ("winter", ...); "" = next in rotation.
 var tagline := ""
 var rules: Array[String] = []
 var action_name := "Dash"
@@ -48,6 +49,7 @@ func setup(p_players: Array[PlayerSlot]) -> void:
 	players = p_players
 	rng.randomize()
 	arena = Arena.new()
+	arena.theme = Themes.get_theme(theme_name if theme_name != "" else Game.next_theme())
 	add_child(arena)
 	build()
 	if powerups_enabled:

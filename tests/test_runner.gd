@@ -98,7 +98,8 @@ func _bots(n: int) -> Array[PlayerSlot]:
 
 func _minigames() -> void:
 	print("== minigames")
-	for path in Game.MINIGAMES:
+	var only_game := OS.get_environment("GAME")
+	for path in Game.MINIGAMES.filter(func(p): return only_game == "" or p.contains(only_game)):
 		for n in [2, 4, 8]:
 			var players := _bots(n)
 			var mg: Minigame = load(path).new()

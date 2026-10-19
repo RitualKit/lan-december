@@ -98,16 +98,16 @@ func _font(path: String) -> Font:
 
 ## A 1x1 column from y=top down to y=bottom: grass top, a cliff band with a grass lip,
 ## then plain cliff. Shared between all tiles with the same heights.
-func tile_mesh(top: float, bottom: float, top_tex := "grass") -> ArrayMesh:
-	var key := "%s:%s:%s" % [top, bottom, top_tex]
+func tile_mesh(top: float, bottom: float, top_tex := "grass", lip_tex := "cliff_top", side_tex := "cliff") -> ArrayMesh:
+	var key := "%s:%s:%s:%s:%s" % [top, bottom, top_tex, lip_tex, side_tex]
 	if _mesh.has(key):
 		return _mesh[key]
 	var mesh := ArrayMesh.new()
 	var lip_bottom := maxf(top - 1.0, bottom)
 	_add_surface(mesh, [_top_quad(top)], material(top_tex))
-	_add_surface(mesh, _side_quads(top, lip_bottom, 0.0), material("cliff_top"))
+	_add_surface(mesh, _side_quads(top, lip_bottom, 0.0), material(lip_tex))
 	if lip_bottom > bottom:
-		_add_surface(mesh, _side_quads(lip_bottom, bottom, 0.0), material("cliff"))
+		_add_surface(mesh, _side_quads(lip_bottom, bottom, 0.0), material(side_tex))
 	_mesh[key] = mesh
 	return mesh
 
@@ -193,6 +193,11 @@ const ICONS := {
 		".oLLLLo.oPo", "..oooo...oo",
 	],
 	"alert": ["oo", "Po", "Po", "Po", "oo", "..", "oo", "Po", "oo"],
+	"tuft": ["........", "..L...L.", ".LP..LP.", ".PP.LPP.", "oPPLPPPo"],
+	"bloom": [".y.....", "yPy..y.", ".y..yPy", ".L...y.", ".L..L..", "oLooLo."],
+	"pebble": ["..LL..", ".LPPP.", "oPPPPo", ".oooo."],
+	"shell": ["..L..", ".LPL.", "LPLPL", "PLPLP", ".ooo."],
+	"leafpile": ["...y....", ".yPP.y..", "yPPPPPy.", "PPoPPPPy", ".oooooo."],
 }
 
 
@@ -294,11 +299,25 @@ func generate(tex_name: String) -> Image:
 	match tex_name:
 		"grass": return _grass(Color("5e9a45"), Color("4b8238"), Color("74b052"), 1)
 		"grass_dark": return _grass(Color("4f8f45"), Color("3f7a3a"), Color("67a956"), 5)
-		"cliff": return _cliff(false)
-		"cliff_top": return _cliff(true)
+		"grass_autumn": return _grass(Color("8a9444"), Color("6c7434"), Color("c09a44"), 2)
+		"cliff": return _cliff(STONE_GREY, [])
+		"cliff_top": return _cliff(STONE_GREY, LIP_GRASS)
+		"cliff_top_autumn": return _cliff(STONE_GREY, LIP_AUTUMN)
+		"cliff_top_snow": return _cliff(STONE_COLD, LIP_SNOW)
+		"cliff_cold": return _cliff(STONE_COLD, [])
+		"cliff_warm": return _cliff(STONE_WARM, [])
+		"cliff_top_sand": return _cliff(STONE_WARM, LIP_SAND)
+		"cliff_top_night": return _cliff(STONE_NIGHT, LIP_NIGHT)
+		"cliff_night": return _cliff(STONE_NIGHT, [])
+		"maple": return _foliage(Color("e8803a"), Color("c0502a"), Color("f8b050"), 13)
+		"pine": return _foliage(Color("2f6b4a"), Color("24563c"), Color("3f8a5c"), 14)
+		"pine_snow": return _foliage(Color("3f7a5a"), Color("2f6048"), Color("eef4fa"), 15)
+		"palm": return _foliage(Color("4caa4a"), Color("2f7a38"), Color("7acc5a"), 16)
+		"ice": return _speckle(Color("cfe8f4"), Color("a8d0e4"), Color("f2fbff"), 17)
+		"pumpkin": return _foliage(Color("e8822e"), Color("c0601e"), Color("f8a050"), 18)
 		"path": return _speckle(Color("d9c08c"), Color("c4a874"), Color("ead6a8"), 3)
 		"path_cracked": return _cracked(_speckle(Color("cdb27c"), Color("b89c68"), Color("dcc69a"), 3))
-		"sand": return _speckle(Color("ecd9a0"), Color("d8c286"), Color("f8ecc4"), 4)
+		"sand": return _speckle(Color("e0c88c"), Color("c8ae74"), Color("eedcae"), 4)
 		"bark": return _bark()
 		"blossom": return _foliage(Color("f4a6c8"), Color("dc7aa8"), Color("ffd6e8"), 7)
 		"leaves": return _foliage(Color("5aa04a"), Color("3f7f3a"), Color("84c45e"), 8)
@@ -306,7 +325,7 @@ func generate(tex_name: String) -> Image:
 		"wood": return _planks()
 		"cloth": return _cloth(Color("c8463c"), Color("a33a32"))
 		"pad": return _speckle(Color("e9e2d0"), Color("d6cdb6"), Color("fbf7ec"), 11)
-		"snow": return _speckle(Color("eef4fa"), Color("d6e2ee"), Color("ffffff"), 12)
+		"snow": return _speckle(Color("e2eaf2"), Color("c4d2e2"), Color("f6f9fc"), 12)
 	push_warning("Art: unknown texture '%s'" % tex_name)
 	return _speckle(Color.MAGENTA, Color.BLACK, Color.WHITE, 0)
 
@@ -341,12 +360,24 @@ func _paint(color: Color) -> Image:
 	return img
 
 
-func _cliff(lip: bool) -> Image:
+# Stone: [base, dark seam, light edge]. Lip: [top highlight, body, shadow line] or [] for none.
+const STONE_GREY := [Color("8d919e"), Color("5f6372"), Color("adb1bd")]
+const STONE_COLD := [Color("8e9aac"), Color("5c6880"), Color("b4c0d2")]
+const STONE_WARM := [Color("c8a878"), Color("94744c"), Color("e0c49a")]
+const STONE_NIGHT := [Color("6a6e84"), Color("44475c"), Color("8a8ea6")]
+const LIP_GRASS := [Color("74b052"), Color("5e9a45"), Color("36612e")]
+const LIP_AUTUMN := [Color("c09a44"), Color("8a9444"), Color("545a28")]
+const LIP_SNOW := [Color("ffffff"), Color("e6eef6"), Color("9ab0c8")]
+const LIP_SAND := [Color("eedcae"), Color("e0c88c"), Color("a88c5c")]
+const LIP_NIGHT := [Color("67a956"), Color("4f8f45"), Color("2a4a2e")]
+
+
+func _cliff(stone: Array, lip: Array) -> Image:
 	var img := Image.create_empty(PX, PX, false, Image.FORMAT_RGBA8)
 	var seams := [0, 5, 11]
-	var base := Color("8d919e")
-	var dark := Color("5f6372")
-	var light := Color("adb1bd")
+	var base: Color = stone[0]
+	var dark: Color = stone[1]
+	var light: Color = stone[2]
 	for y in PX:
 		for x in PX:
 			var slab := 0
@@ -362,12 +393,12 @@ func _cliff(lip: bool) -> Image:
 			elif hash01(x, y, 4) > 0.88:
 				c = c.darkened(0.12)
 			img.set_pixel(x, y, c)
-	if lip:
+	if not lip.is_empty():
 		for x in PX:
 			var depth := 2 + int(hash01(x / 2, 0, 9) * 3.0)
 			for y in depth:
-				img.set_pixel(x, y, Color("74b052") if y == 0 else Color("5e9a45"))
-			img.set_pixel(x, depth, Color("36612e"))
+				img.set_pixel(x, y, lip[0] if y == 0 else lip[1])
+			img.set_pixel(x, depth, lip[2])
 	return img
 
 

@@ -3,7 +3,6 @@ extends RefCounted
 ## One-shot visual effects built from tiny pixel cubes.
 
 static var _cube_mesh: BoxMesh
-static var _petal_mesh: QuadMesh
 
 
 static func _cube(size := 0.09) -> BoxMesh:
@@ -65,20 +64,15 @@ static func explosion(parent: Node, pos: Vector3) -> void:
 	burst(parent, pos, Color("4a4a55"), 24, 4.0)
 
 
-## Petals drifting over the whole scene. Returns the emitter.
-static func petal_weather(parent: Node, center: Vector3, extent: float, amount := 60) -> CPUParticles3D:
-	if _petal_mesh == null:
-		_petal_mesh = QuadMesh.new()
-		_petal_mesh.size = Vector2(0.12, 0.09)
-		var m := StandardMaterial3D.new()
-		m.albedo_color = Color("ffc2dc")
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-		m.cull_mode = BaseMaterial3D.CULL_DISABLED
-		_petal_mesh.material = m
+## Ambient particles over the whole scene: "petals", "leaves", "snow" or "fireflies".
+static func weather(parent: Node, center: Vector3, extent: float, kind := "petals") -> CPUParticles3D:
+	var quad := QuadMesh.new()
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var p := CPUParticles3D.new()
-	p.mesh = _petal_mesh
-	p.amount = amount
+	p.amount = 60
 	p.lifetime = 9.0
 	p.preprocess = 9.0
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -92,8 +86,46 @@ static func petal_weather(parent: Node, center: Vector3, extent: float, amount :
 	p.angle_max = 180.0
 	p.angular_velocity_min = -90.0
 	p.angular_velocity_max = 90.0
+	var height := 7.0
+	match kind:
+		"petals":
+			quad.size = Vector2(0.12, 0.09)
+			m.albedo_color = Color("ffc2dc")
+		"leaves":
+			quad.size = Vector2(0.14, 0.1)
+			m.albedo_color = Color("f09040")
+			p.amount = 45
+			p.gravity = Vector3(0, -0.5, 0)
+		"snow":
+			quad.size = Vector2(0.08, 0.08)
+			m.albedo_color = Color("ffffff")
+			p.amount = 140
+			p.direction = Vector3(0.2, -1, 0.1)
+			p.initial_velocity_min = 0.6
+			p.initial_velocity_max = 1.2
+			p.gravity = Vector3(0, -0.4, 0)
+			p.lifetime = 7.0
+			p.preprocess = 7.0
+		"fireflies":
+			quad.size = Vector2(0.07, 0.07)
+			m.albedo_color = Color("fff08a")
+			m.emission_enabled = true
+			m.emission = Color("ffe060")
+			m.emission_energy_multiplier = 4.0
+			p.amount = 50
+			p.direction = Vector3(0, 1, 0)
+			p.spread = 180.0
+			p.initial_velocity_min = 0.1
+			p.initial_velocity_max = 0.4
+			p.gravity = Vector3.ZERO
+			p.angular_velocity_min = 0.0
+			p.angular_velocity_max = 0.0
+			p.emission_box_extents = Vector3(extent, 1.2, extent)
+			height = 1.0
+	quad.material = m
+	p.mesh = quad
 	parent.add_child(p)
-	p.global_position = center + Vector3(-2, 7, 0)
+	p.global_position = center + Vector3(-2 if kind != "fireflies" else 0, height, 0)
 	return p
 
 

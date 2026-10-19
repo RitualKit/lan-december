@@ -10,6 +10,7 @@ var _confetti_t := 0.0
 
 func _ready() -> void:
 	arena = Arena.new()
+	arena.theme = Themes.get_theme(Game.next_theme())
 	add_child(arena)
 	var cells := Arena.disc(4.2)
 	cells[Vector2i(0, -1)] = 3

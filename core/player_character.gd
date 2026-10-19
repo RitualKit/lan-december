@@ -6,6 +6,8 @@ extends CharacterBody3D
 
 signal fell(ch: PlayerCharacter)
 signal dashed(ch: PlayerCharacter)
+## Action pressed in a game where it neither dashes nor hops (e.g. throwing).
+signal acted(ch: PlayerCharacter)
 
 const GRAVITY := 28.0
 const FALL_LIMIT := -1.4
@@ -26,7 +28,7 @@ var alive := true
 var invulnerable := 0.0
 var tint := Color.WHITE ## Base sprite colour; flashes are applied on top.
 var cheering := false ## Arms-up pose (wins, catches).
-## Timed power-up effects: "speed", "shield", "giant", "frozen" -> seconds left.
+## Timed effects: "speed", "shield", "giant", "frozen", "seated" (can't be knocked) -> seconds left.
 var status := {}
 
 var facing := Vector3(0, 0, 1)
@@ -133,6 +135,8 @@ func _physics_process(delta: float) -> void:
 		elif can_jump and is_on_floor():
 			velocity.y = jump_velocity
 			Sfx.play_varied("jump", 0.1, -4.0)
+		elif not can_dash and not can_jump:
+			acted.emit(self)
 
 	var target := move * speed * (1.45 if has_status("speed") else 1.0)
 	if _dash_left > 0.0:
@@ -264,7 +268,7 @@ func reset_dash_cooldown() -> void:
 func hit(impulse: Vector3, stun_time := 0.2) -> bool:
 	if not alive or invulnerable > 0.0:
 		return false
-	if has_status("shield"):
+	if has_status("shield") or has_status("seated"):
 		_flash = 0.1
 		return false
 	impulse.y = 0

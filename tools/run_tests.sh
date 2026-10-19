@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs the headless test suite. Fails on any failed check or script error.
 # Usage: tools/run_tests.sh            (all)
-#        ONLY=unit|minigames|match tools/run_tests.sh
+#        ONLY=unit|powerups|minigames|match tools/run_tests.sh
+#        ONLY=minigames GAME=river_run tools/run_tests.sh   (one minigame)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 GODOT="${GODOT:-godot}"

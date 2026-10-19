@@ -12,17 +12,22 @@ var cell: Vector2i
 var level := 0
 var top_y := 0.0
 var top_texture := "grass"
+var lip_texture := "cliff_top"
+var side_texture := "cliff"
 var state := State.SOLID
 var painted_by: PlayerSlot
 var mesh_instance: MeshInstance3D
 var _shape: CollisionShape3D
+var _tween: Tween
 
 
-func _init(p_cell: Vector2i, p_level := 0, p_top := "grass") -> void:
+func _init(p_cell: Vector2i, p_level := 0, p_top := "grass", p_lip := "cliff_top", p_side := "cliff") -> void:
 	cell = p_cell
 	level = p_level
 	top_y = float(level)
 	top_texture = p_top
+	lip_texture = p_lip
+	side_texture = p_side
 	position = Vector3(cell.x, 0, cell.y)
 	collision_layer = 1
 	collision_mask = 0
@@ -33,7 +38,7 @@ func _init(p_cell: Vector2i, p_level := 0, p_top := "grass") -> void:
 	_shape.position.y = (top_y + BOTTOM) * 0.5
 	add_child(_shape)
 	mesh_instance = MeshInstance3D.new()
-	mesh_instance.mesh = Art.tile_mesh(top_y, BOTTOM, top_texture)
+	mesh_instance.mesh = Art.tile_mesh(top_y, BOTTOM, top_texture, lip_texture, side_texture)
 	add_child(mesh_instance)
 
 
@@ -43,7 +48,7 @@ func is_solid() -> bool:
 
 func set_top(tex_name: String) -> void:
 	top_texture = tex_name
-	mesh_instance.mesh = Art.tile_mesh(top_y, BOTTOM, tex_name)
+	mesh_instance.mesh = Art.tile_mesh(top_y, BOTTOM, tex_name, lip_texture, side_texture)
 
 
 ## Wobble for `delay` seconds, then drop into the sea.
@@ -52,7 +57,7 @@ func crack(delay := 0.6) -> void:
 		return
 	state = State.CRACKING
 	set_top("cliff")
-	var tw := create_tween()
+	var tw := _new_tween()
 	var steps := maxi(2, int(delay / 0.05))
 	for i in steps:
 		var off := Vector3(0.05 if i % 2 == 0 else -0.05, 0, 0.03 if i % 3 == 0 else -0.03)
@@ -66,6 +71,24 @@ func drop() -> void:
 	state = State.GONE
 	_shape.set_deferred("disabled", true)
 	dropped.emit(self)
-	var tw := create_tween()
+	var tw := _new_tween()
 	tw.tween_property(mesh_instance, "position:y", -7.0, 0.9).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_callback(mesh_instance.hide)
+
+
+## Bring a dropped tile back up out of the sea.
+func restore(top_tex := "") -> void:
+	var tw := _new_tween()
+	state = State.SOLID
+	_shape.set_deferred("disabled", false)
+	set_top(top_tex if top_tex != "" else top_texture)
+	mesh_instance.show()
+	mesh_instance.position = Vector3(0, -3.0, 0)
+	tw.tween_property(mesh_instance, "position", Vector3.ZERO, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _new_tween() -> Tween:
+	if _tween and _tween.is_valid():
+		_tween.kill()
+	_tween = create_tween()
+	return _tween
