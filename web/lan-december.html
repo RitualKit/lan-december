@@ -24,6 +24,7 @@ html, body { height: 100%; }
 body {
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   background: radial-gradient(120% 90% at 50% 40%, var(--sea) 0%, var(--sea-deep) 100%);
   color: var(--text);
   font-family: var(--body);
@@ -36,18 +37,23 @@ body {
   display: block;
   outline: none;
   image-rendering: pixelated;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 #splash {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
   padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px));
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   overflow-y: auto;
 }
+.touch-only { display: none; }
 .card {
+  margin: auto;
   width: min(640px, 100%);
   background: var(--card);
   border: 4px solid var(--ink);
@@ -132,6 +138,11 @@ h1 {
 @media (max-width: 560px) {
   .keys { grid-template-columns: minmax(0, 1fr); }
 }
+@media (pointer: coarse) {
+  .keys, .desk-only { display: none; }
+  .touch-only { display: block; }
+  .card { gap: 14px; padding-block: 20px; }
+}
 @media (prefers-reduced-motion: reduce) {
   #play, .fill { transition: none; }
 }
@@ -165,7 +176,8 @@ h1 {
       </div>
     </div>
 
-    <p class="how">Press your join button, walk onto <b>+ CPU</b> to add computer players, then everyone stands on <b>START</b>. Esc pauses.</p>
+    <p class="how desk-only">Press your join button, walk onto <b>+ CPU</b> to add computer players, then everyone stands on <b>START</b>. Esc pauses.</p>
+    <p class="how touch-only">Drag on the left half of the screen to move. Tap <b>A</b> to join and dash, <b>ITEM</b> to use a power-up. Walk onto <b>+ CPU</b> to add opponents, then stand on <b>START</b>. Turn your phone sideways for the biggest view.</p>
 
     <button id="play" type="button">PLAY</button>
 
@@ -175,7 +187,8 @@ h1 {
     </div>
     <div id="error" hidden></div>
 
-    <p class="note">Needs a keyboard or gamepad. Two people can share one keyboard.</p>
+    <p class="note desk-only">Keyboard, gamepad or touch screen. Two people can share one keyboard.</p>
+    <p class="note touch-only">A gamepad connected to your phone works too.</p>
   </div>
 </div>
 
@@ -253,6 +266,10 @@ h1 {
   }
 
   play.addEventListener('click', function () {
+    // Phones: try fullscreen so the browser bars don't eat the game. Optional.
+    if (matchMedia('(pointer: coarse)').matches && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(function () {});
+    }
     play.hidden = true;
     error.hidden = true;
     loading.hidden = false;

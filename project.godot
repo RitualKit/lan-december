@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Art="*res://autoload/art.gd"
+Touch="*res://autoload/touch.gd"
 Sfx="*res://autoload/sfx.gd"
 Controls="*res://autoload/controls.gd"
 Game="*res://autoload/game.gd"

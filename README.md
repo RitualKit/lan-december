@@ -23,6 +23,8 @@ Everyone plays on one screen. Players use keyboards and gamepads, and CPU player
 
 **Esc** or **Start** pauses. While paused, **Back** quits to the lobby.
 
+**Phones and tablets:** on-screen controls appear automatically. Drag anywhere on the left half to move, tap **A** to join and dash, **ITEM** to use a power-up, **II** to pause (**LOBBY** quits while paused). One person plays on the touch screen; gamepads paired with the device work too. Portrait works, but landscape gives the biggest view. On phones the 3D scene renders at 60% resolution without shadows to keep it smooth.
+
 ### Lobby
 
 - Press the action button on any device to join. Your character drops onto the island.
@@ -81,7 +83,7 @@ Hits from items count like dash hits: in Petal Rush they make the victim drop bl
 ## Project layout
 
 ```
-autoload/   Art (procedural art), Sfx (synth), Controls (per-device input), Game (match state & scoring)
+autoload/   Art (art & textures), Touch (on-screen controls), Sfx (synth), Controls (per-device input), Game (match state & scoring)
 core/       Minigame base class, PlayerCharacter, Powerups, Arena/ArenaTile (island builder), water shader, Fx, Props, Ui
 main/       main.tscn (screen switcher + pause), lobby, match_host (rounds/intro/results), podium
 minigames/  One script per minigame

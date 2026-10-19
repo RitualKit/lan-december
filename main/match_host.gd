@@ -77,9 +77,10 @@ func _intro() -> void:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		v.add_child(l)
 		v.add_child(_spacer(6))
-	v.add_child(Ui.label("SPACE · ENTER · (A)  =  %s" % minigame.action_name.to_upper(), 22, Ui.GOLD, 6))
+	var action_keys := "A" if Touch.active else "SPACE · ENTER · (A)"
+	v.add_child(Ui.label("%s  =  %s" % [action_keys, minigame.action_name.to_upper()], 22, Ui.GOLD, 6))
 	if minigame.powerups_enabled:
-		v.add_child(Ui.label("E · RIGHT SHIFT · (X)  =  USE ITEM", 22, Color("ffd6e8"), 6))
+		v.add_child(Ui.label("%s  =  USE ITEM" % ("ITEM" if Touch.active else "E · RIGHT SHIFT · (X)"), 22, Color("ffd6e8"), 6))
 	v.add_child(_spacer(4))
 
 	var ready_row := HBoxContainer.new()
@@ -96,7 +97,7 @@ func _intro() -> void:
 		if slot.is_bot:
 			ready[slot] = true
 			chip.modulate = Color.WHITE
-	var hint := Ui.body("Press action when ready", 18, Color("b8b0c8"))
+	var hint := Ui.body("Tap A when ready" if Touch.active else "Press action when ready", 18, Color("b8b0c8"))
 	v.add_child(hint)
 	_pop_in(card)
 
@@ -142,8 +143,9 @@ func _results(ranking: Array, points: Dictionary, mult: int) -> void:
 	if mult > 1:
 		v.add_child(Ui.label("double points!", 22, Ui.GOLD, 6))
 
-	var cols := HBoxContainer.new()
-	cols.add_theme_constant_override("separation", 48)
+	var narrow := get_viewport().get_visible_rect().size.x < 900
+	var cols: BoxContainer = VBoxContainer.new() if narrow else HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 16 if narrow else 48)
 	cols.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(cols)
 
@@ -226,7 +228,7 @@ func _results(ranking: Array, points: Dictionary, mult: int) -> void:
 
 func _card(width := 760) -> PanelContainer:
 	var card := Ui.panel(Color(0.11, 0.09, 0.16, 0.92), Art.OUTLINE, 24)
-	card.custom_minimum_size = Vector2(width, 0)
+	card.custom_minimum_size = Vector2(minf(width, get_viewport().get_visible_rect().size.x - 32), 0)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
 	v.alignment = BoxContainer.ALIGNMENT_CENTER

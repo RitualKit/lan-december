@@ -106,7 +106,7 @@ func setup_view(p_focus: Vector3, distance := 20.0, pitch_deg := 52.0) -> void:
 	sun.rotation_degrees = Vector3(-52, -38, 0)
 	sun.light_color = Color("fff0d8")
 	sun.light_energy = 1.15 if GroundMark.use_decals else 0.95
-	sun.shadow_enabled = true
+	sun.shadow_enabled = not Touch.is_mobile()
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_max_distance = distance + 25.0
 	add_child(sun)
@@ -192,6 +192,14 @@ func shake(amount: float) -> void:
 func _process(delta: float) -> void:
 	if camera == null:
 		return
+	var vs := get_viewport().get_visible_rect().size
+	if vs.x < vs.y:
+		# Portrait: keep the island's width in view (same width as a 16:9 screen).
+		camera.keep_aspect = Camera3D.KEEP_WIDTH
+		camera.fov = 54.0
+	else:
+		camera.keep_aspect = Camera3D.KEEP_HEIGHT
+		camera.fov = 32.0
 	if _shake > 0.001:
 		_shake = move_toward(_shake, 0.0, delta * 1.8)
 		var off := Vector3(randf_range(-1, 1), randf_range(-1, 1), 0) * _shake * 0.35

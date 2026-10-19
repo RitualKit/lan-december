@@ -391,12 +391,20 @@ func _build_hud() -> void:
 	name_tag.position = Vector2(20, 16)
 	root.add_child(name_tag)
 
-	var bar := HBoxContainer.new()
-	bar.alignment = BoxContainer.ALIGNMENT_CENTER
-	bar.add_theme_constant_override("separation", 10)
-	bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bar.offset_top = -64
-	bar.offset_bottom = -12
+	var bar := HFlowContainer.new()
+	bar.alignment = FlowContainer.ALIGNMENT_CENTER
+	bar.add_theme_constant_override("h_separation", 10)
+	bar.add_theme_constant_override("v_separation", 8)
+	if Touch.active:
+		# Keep the bottom of the screen free for thumbs.
+		bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+		bar.offset_top = 84
+	else:
+		bar.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+		bar.offset_bottom = -12
+		bar.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	bar.offset_left = 12
+	bar.offset_right = -12
 	root.add_child(bar)
 	for slot in players:
 		var chip := Ui.panel(Color(0.11, 0.09, 0.16, 0.75), slot.color.darkened(0.2), 6)

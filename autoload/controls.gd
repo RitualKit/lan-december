@@ -3,6 +3,7 @@ extends Node
 ##   "kb0"  WASD + Space (action) + E/Q (item) + E (back)
 ##   "kb1"  Arrows + Enter (action) + Right Shift or / (item) + Backspace (back)
 ##   "padN" Left stick / D-pad + A (action) + X/B (item) + B (back) + Start (pause)
+##   "touch" On-screen stick and buttons on phones/tablets (see Touch)
 ## States are polled once per physics tick (this autoload runs before the scene).
 
 const DEADZONE := 0.3
@@ -30,6 +31,8 @@ func devices() -> Array[String]:
 	var out: Array[String] = ["kb0", "kb1"]
 	for id in Input.get_connected_joypads():
 		out.append("pad%d" % id)
+	if Touch.active:
+		out.append("touch")
 	return out
 
 
@@ -40,6 +43,8 @@ func device_label(device: String) -> String:
 		return "Keys Arrows"
 	if device.begins_with("pad"):
 		return "Pad %d" % (int(device.substr(3)) + 1)
+	if device == "touch":
+		return "Touch"
 	return "CPU"
 
 
@@ -95,6 +100,8 @@ func _fill(s: Dictionary) -> Dictionary:
 
 
 func _poll(device: String) -> Dictionary:
+	if device == "touch":
+		return Touch.take_state()
 	var s := {}
 	if device == "kb0":
 		s.move = _keys(KEY_A, KEY_D, KEY_W, KEY_S)

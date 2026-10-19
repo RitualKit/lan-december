@@ -74,6 +74,22 @@ func _build_hud() -> void:
 	help.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	help.custom_minimum_size = Vector2(330, 0)
 	var v := VBoxContainer.new()
+	if Touch.active:
+		# Touch: the stick and buttons own the bottom corners, so the help moves up top.
+		help.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+		help.offset_left = 16
+		help.offset_top = 140
+		help.grow_vertical = Control.GROW_DIRECTION_END
+		v.add_child(Ui.label("TOUCH", 22, Ui.GOLD, 6))
+		v.add_child(Ui.body("Tap A to join and dash", 18))
+		v.add_child(Ui.body("Drag on the left half to move", 18))
+		v.add_child(Ui.body("ITEM uses a power-up", 18))
+		v.add_child(Ui.body("Gamepads and keyboards work too", 16, Color("b8b0c8")))
+		help.add_child(v)
+		root.add_child(help)
+		_add_hint_labels(root)
+		running = true
+		return
 	v.add_child(Ui.label("JOIN", 22, Ui.GOLD, 6))
 	v.add_child(Ui.body("SPACE  ·  ENTER  ·  (A)", 18))
 	v.add_child(Ui.label("MOVE / DASH", 22, Ui.GOLD, 6))
@@ -84,6 +100,11 @@ func _build_hud() -> void:
 	help.add_child(v)
 	root.add_child(help)
 
+	_add_hint_labels(root)
+	running = true
+
+
+func _add_hint_labels(root: Control) -> void:
 	_hint = Ui.label("", 30, Color.WHITE, 10)
 	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_hint.offset_top = -64
@@ -98,7 +119,12 @@ func _build_hud() -> void:
 	_count_label.offset_bottom = -20
 	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	root.add_child(_count_label)
-	running = true
+	if Touch.active:
+		# Bottom corners belong to the stick and buttons.
+		_hint.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+		_hint.offset_top = 136
+		_hint.offset_bottom = 176
+		_count_label.hide()
 
 
 func _add_pad(pad_name: String, pos: Vector3, radius: float, color: Color, text: String) -> void:
@@ -214,9 +240,9 @@ func tick(delta: float) -> void:
 		pads["start"].label.text = "START"
 
 	if humans.is_empty():
-		_hint.text = "Press SPACE, ENTER or (A) to join!"
+		_hint.text = "Tap A to join!" if Touch.active else "Press SPACE, ENTER or (A) to join!"
 	elif players.size() < 2:
-		_hint.text = "Need 2+ players. Grab a friend or step on + CPU"
+		_hint.text = "Need 2+ players. Walk onto + CPU to add one" if Touch.active else "Need 2+ players. Grab a friend or step on + CPU"
 	elif not ready:
 		_hint.text = "Everyone stand on START to begin  (%d/%d)" % [on_start.size(), humans.size()]
 	else:

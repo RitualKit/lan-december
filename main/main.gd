@@ -13,7 +13,21 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	Game.main = self
 	_build_pause()
+	get_window().size_changed.connect(_fit_screen)
+	_fit_screen()
+	if Touch.is_mobile():
+		# Phones: render 3D at a lower resolution (crisp pixel upscale) and skip shadows.
+		get_viewport().scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+		get_viewport().scaling_3d_scale = 0.6
+		get_viewport().msaa_3d = Viewport.MSAA_DISABLED
 	goto_lobby()
+
+
+## Landscape uses a 1280x720 layout; a portrait phone gets a narrower, taller one so
+## text stays readable.
+func _fit_screen() -> void:
+	var s := get_window().size
+	get_tree().root.content_scale_size = Vector2i(760, 1280) if s.x < s.y else Vector2i(1280, 720)
 
 
 func goto_lobby() -> void:
@@ -37,6 +51,7 @@ func _swap(node: Node) -> void:
 		current.queue_free()
 	current = node
 	current.process_mode = Node.PROCESS_MODE_PAUSABLE
+	Touch.show_pause = not (node is Lobby)
 	add_child(current)
 
 
@@ -69,4 +84,5 @@ func _build_pause() -> void:
 	box.add_child(Ui.label("PAUSED", 80, Ui.GOLD, 14))
 	box.add_child(Ui.body("Esc / Start: resume", 26))
 	box.add_child(Ui.body("E / Backspace / (B): quit to lobby", 26))
+	box.add_child(Ui.body("On touch: II resumes, LOBBY quits", 26))
 	_pause_layer.add_child(box)
