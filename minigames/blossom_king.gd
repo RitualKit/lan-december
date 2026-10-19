@@ -8,8 +8,8 @@ const WARN_TIME := 2.0
 var scores := {}
 var zone_pos := Vector3.ZERO
 var next_pos := Vector3.ZERO
-var _zone: Decal
-var _next: Decal
+var _zone: GroundMark
+var _next: GroundMark
 var _move_t := MOVE_EVERY
 var _ding := {}
 var radius := 5.5

@@ -84,13 +84,18 @@ func setup_view(p_focus: Vector3, distance := 20.0, pitch_deg := 52.0) -> void:
 	env.glow_bloom = 0.04
 	env.adjustment_enabled = true
 	env.adjustment_saturation = 1.0
+	if not GroundMark.use_decals:
+		# Compatibility renderer (web): no SSAO/DoF, and it renders brighter.
+		env.tonemap_exposure = 0.8
+		env.ambient_light_energy = 0.45
+		env.glow_intensity = 0.3
 	var world := WorldEnvironment.new()
 	world.environment = env
 	var attrs := CameraAttributesPractical.new()
-	attrs.dof_blur_far_enabled = true
+	attrs.dof_blur_far_enabled = GroundMark.use_decals
 	attrs.dof_blur_far_distance = distance + 7.0
 	attrs.dof_blur_far_transition = 9.0
-	attrs.dof_blur_near_enabled = true
+	attrs.dof_blur_near_enabled = GroundMark.use_decals
 	attrs.dof_blur_near_distance = distance - 8.0
 	attrs.dof_blur_near_transition = 4.0
 	attrs.dof_blur_amount = 0.06
@@ -100,7 +105,7 @@ func setup_view(p_focus: Vector3, distance := 20.0, pitch_deg := 52.0) -> void:
 	sun = DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, -38, 0)
 	sun.light_color = Color("fff0d8")
-	sun.light_energy = 1.15
+	sun.light_energy = 1.15 if GroundMark.use_decals else 0.95
 	sun.shadow_enabled = true
 	sun.shadow_blur = 1.5
 	sun.directional_shadow_max_distance = distance + 25.0

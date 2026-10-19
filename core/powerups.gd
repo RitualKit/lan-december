@@ -321,7 +321,7 @@ func _update_bolts(delta: float) -> void:
 	for i in range(_bolts.size() - 1, -1, -1):
 		var b := _bolts[i]
 		b.t -= delta
-		var decal: Decal = b.decal
+		var decal: GroundMark = b.decal
 		decal.modulate = Color(1, 1, 1, 1.0 if int(b.t * 14.0) % 2 == 0 else 0.4)
 		if b.t > 0.0:
 			continue

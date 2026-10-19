@@ -55,7 +55,7 @@ func tick(delta: float) -> void:
 		var d := drops[i]
 		d.t -= delta
 		var k: float = 1.0 - d.t / d.warn
-		var decal: Decal = d.decal
+		var decal: GroundMark = d.decal
 		decal.size = Vector3.ONE * d.radius * 2.0 * lerpf(0.3, 1.0, minf(1.0, k * 1.5))
 		decal.size.y = 6.0
 		var rock: Node3D = d.rock

@@ -9,6 +9,10 @@ Everyone plays on one screen. Players use keyboards and gamepads, and CPU player
 1. Install [Godot 4.7](https://godotengine.org/download) (the standard build, not .NET).
 2. Open `project.godot` in Godot and press **F5**, or run `godot --path .` from this folder.
 
+### In a browser
+
+`tools/build_web.sh` builds a web version into `build/web/` (needs the Godot 4.7 web export template). Open `build/web/lan-december.html` through any local web server. The web build uses Godot's Compatibility renderer, so depth-of-field blur is off and ground markers are flat quads instead of decals.
+
 ## Controls
 
 | Device | Move | Action (join / dash / hop / strike) | Use item | Back (leave) |

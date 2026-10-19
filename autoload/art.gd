@@ -224,7 +224,7 @@ func icon_sprite(icon_name: String, main: Color, accent := Color("ffe066"), px_s
 	return s
 
 
-## Ring in the player's colour around a soft dark blob; projected under the feet by a Decal.
+## Ring in the player's colour around a soft dark blob; shown under the feet.
 func marker_texture(color: Color) -> Texture2D:
 	var key := "marker:%s" % color.to_html()
 	if _tex.has(key):
@@ -261,15 +261,8 @@ func zone_texture(color: Color, fill_alpha := 0.3) -> Texture2D:
 	return t
 
 
-func zone_decal(color: Color, radius: float, fill_alpha := 0.3) -> Decal:
-	var d := Decal.new()
-	d.texture_albedo = zone_texture(color, fill_alpha)
-	d.texture_emission = d.texture_albedo
-	d.emission_energy = 0.6
-	d.size = Vector3(radius * 2.0, 4.0, radius * 2.0)
-	d.cull_mask = 1
-	d.normal_fade = 0.4
-	return d
+func zone_decal(color: Color, radius: float, fill_alpha := 0.3) -> GroundMark:
+	return GroundMark.new(zone_texture(color, fill_alpha), Vector3(radius * 2.0, 4.0, radius * 2.0), 0.6)
 
 
 # --- Procedural textures ------------------------------------------------------------

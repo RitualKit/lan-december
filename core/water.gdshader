@@ -27,7 +27,11 @@ void fragment() {
 	vec2 px = floor(world_pos.xz * pixels_per_unit) / pixels_per_unit;
 
 	float depth = texture(depth_texture, SCREEN_UV).r;
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	vec4 view = INV_PROJECTION_MATRIX * vec4(vec3(SCREEN_UV, depth) * 2.0 - 1.0, 1.0);
+#else
 	vec4 view = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, depth, 1.0);
+#endif
 	view.xyz /= view.w;
 	float diff = VERTEX.z - view.z;
 

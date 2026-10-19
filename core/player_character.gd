@@ -42,7 +42,7 @@ var _bubble: MeshInstance3D
 var _ice: MeshInstance3D
 
 var sprite: Sprite3D
-var marker: Decal
+var marker: GroundMark
 var label: Label3D
 var carry_anchor: Node3D
 
@@ -74,12 +74,8 @@ func _init(p_slot: PlayerSlot) -> void:
 	sprite.position.y = 0.02
 	add_child(sprite)
 
-	marker = Decal.new()
-	marker.texture_albedo = Art.marker_texture(slot.color)
-	marker.size = Vector3(1.1, 2.5, 1.1)
-	marker.position.y = -0.2
-	marker.cull_mask = 1
-	marker.normal_fade = 0.4
+	marker = GroundMark.new(Art.marker_texture(slot.color), Vector3(1.1, 2.5, 1.1))
+	marker.position.y = -0.2 if GroundMark.use_decals else 0.0
 	add_child(marker)
 
 	label = Label3D.new()
