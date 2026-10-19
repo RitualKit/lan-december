@@ -20,6 +20,10 @@ var last_standing := false ## Ends when one (or no) player is left.
 var bumps_enabled := true
 var bump_radius := 0.62
 var bump_power := 9.5
+## Treasure chests with items (bombs, shurikens, spells...) during the round.
+var powerups_enabled := false
+var powerup_items: Array[String] = [] ## Limit which items drop; empty = all of them.
+var powerups: Powerups
 
 var players: Array[PlayerSlot] = []
 var chars: Array[PlayerCharacter] = []
@@ -46,6 +50,11 @@ func setup(p_players: Array[PlayerSlot]) -> void:
 	arena = Arena.new()
 	add_child(arena)
 	build()
+	if powerups_enabled:
+		powerups = Powerups.new(self)
+		if not powerup_items.is_empty():
+			powerups.allowed = powerup_items
+		add_child(powerups)
 	_build_hud()
 
 
@@ -83,6 +92,11 @@ func on_out(_ch: PlayerCharacter) -> void:
 
 func on_dash_hit(_attacker: PlayerCharacter, _victim: PlayerCharacter) -> void:
 	pass
+
+
+## A power-up (bomb, shuriken, fire...) knocked `victim`. Defaults to the dash-hit rules.
+func on_power_hit(attacker: PlayerCharacter, victim: PlayerCharacter) -> void:
+	on_dash_hit(attacker, victim)
 
 
 # --- Flow -------------------------------------------------------------------------
@@ -194,19 +208,35 @@ func _on_out(ch: PlayerCharacter) -> void:
 
 
 func _input_for(ch: PlayerCharacter) -> Dictionary:
+	var inp: Dictionary
 	if ch.slot.is_bot:
-		var inp := bot_input(ch)
+		inp = bot_input(ch)
 		if inp.action and ch.can_dash:
 			var dir := Vector3(inp.move.x, 0, inp.move.y)
 			if not bot_dash_ok(ch, dir.normalized() if dir.length() > 0.1 else ch.facing):
 				inp.action = false
-		return inp
-	var dev := ch.slot.device
-	return {
-		"move": Controls.move(dev),
-		"action": Controls.just_pressed(dev, "action"),
-		"hold": Controls.pressed(dev, "action"),
-	}
+		if powerups:
+			_bot_powerups(ch, inp)
+	else:
+		var dev := ch.slot.device
+		inp = {
+			"move": Controls.move(dev),
+			"action": Controls.just_pressed(dev, "action"),
+			"hold": Controls.pressed(dev, "action"),
+			"item": Controls.just_pressed(dev, "item"),
+		}
+	if powerups and inp.get("item", false) and ch.stun <= 0.0 and not ch.has_status("frozen"):
+		powerups.use(ch)
+	return inp
+
+
+## CPUs detour to nearby chests and fire their items when it makes sense.
+func _bot_powerups(ch: PlayerCharacter, inp: Dictionary) -> void:
+	if not powerups.held.has(ch):
+		var chest := powerups.nearest_chest(ch, 2.5 + 3.0 * ch.slot.skill)
+		if not chest.is_empty():
+			inp.move = bot_go(ch, chest.pos)
+	inp.item = powerups.bot_wants_use(ch)
 
 
 func _resolve_bumps() -> void:
@@ -223,10 +253,11 @@ func _resolve_bumps() -> void:
 				continue
 			d.y = 0.0
 			var dist := d.length()
-			if dist >= bump_radius:
+			var reach := bump_radius * (a.size_scale() + b.size_scale()) * 0.5
+			if dist >= reach:
 				continue
 			var n := d / dist if dist > 0.001 else Vector3.RIGHT
-			var overlap := bump_radius - dist
+			var overlap := reach - dist
 			a.global_position -= n * overlap * 0.5
 			b.global_position += n * overlap * 0.5
 			var ad := a.is_dashing()
@@ -250,7 +281,9 @@ func on_touch(_a: PlayerCharacter, _b: PlayerCharacter) -> void:
 func _dash_hit(attacker: PlayerCharacter, victim: PlayerCharacter, n: Vector3) -> void:
 	if victim.invulnerable > 0.0:
 		return
-	victim.hit(n * bump_power, 0.3)
+	if not victim.hit(n * bump_power * attacker.knock_dealt(), 0.3):
+		attacker.end_dash()
+		return
 	attacker.end_dash()
 	Sfx.play_varied("hit")
 	Fx.burst(arena, victim.global_position + Vector3.UP * 0.5, Color.WHITE, 10, 3.0)

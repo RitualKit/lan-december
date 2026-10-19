@@ -1,5 +1,6 @@
 extends Node
-## Procedural pixel art: textures, character sprite sheets, materials and tile meshes.
+## Pixel art: character sheets and effects from the Ninja Adventure pack (CC0), plus
+## procedural textures, materials and tile meshes for the islands.
 ##
 ## Every environment texture can be replaced by an artist: drop a PNG with the same
 ## name into res://assets/textures/ (e.g. grass.png, 16x16) and it is used instead
@@ -13,31 +14,11 @@ const PLAYER_COLORS: Array[Color] = [
 	Color("e8433f"), Color("3f7fe8"), Color("4cc256"), Color("f2c230"),
 	Color("a65be0"), Color("f0842c"), Color("35c9c9"), Color("f06aa8"),
 ]
-const HAIR_COLORS: Array[Color] = [
-	Color("7a4a2e"), Color("e0803a"), Color("3a2a2a"), Color("e8c860"),
-	Color("b04a3a"), Color("5a3a6a"), Color("d8d0c0"), Color("4a2a1a"),
-]
-
-# Character sprites, 16x18 per frame. Front/back are drawn as the left half and mirrored.
-# o outline, h/H hat, r hair, s skin, e eye, c/C shirt, p pants, b boots
-const FRONT_HALF: Array[String] = [
-	"........", "....oooo", "...ohhhh", "..ohhhhh", ".oHHHHHH", ".oorrrrr",
-	"..orssss", "..orsess", "..orssss", "...ossss", "....oooo", "...occcc",
-	"..occccc", ".osccccC", "..oppppp", "...oppo.", "...obbo.", "...oooo.",
-]
-const BACK_HALF: Array[String] = [
-	"........", "....oooo", "...ohhhh", "..ohhhhh", ".oHHHHHH", ".oorrrrr",
-	"..orrrrr", "..orrrrr", "..orrrrr", "...orrrr", "....oooo", "...occcc",
-	"..occccc", ".osccccC", "..oppppp", "...oppo.", "...obbo.", "...oooo.",
-]
-const SIDE: Array[String] = [
-	"................", ".....oooooo.....", "....ohhhhhho....", "...ohhhhhhhho...",
-	"...oHHHHHHHHHHo.", "...orrrrssssso..", "...orrrsssssso..", "...orrrsssseso..",
-	"...orrssssssso..", "....orssssSso...", ".....oooooo.....", ".....occcco.....",
-	"....occcccco....", "....occsscco....", "....opppppo.....", ".....oppo.......",
-	".....obbbo......", ".....oooo.......",
-]
-const SIDE_STRIDE: Array[String] = ["....oppppo......", "...obbo.obbo....", "...ooo...ooo...."]
+## Ninja Adventure character sheets (assets/ninja_adventure/characters/<n>.png), in the
+## order they are handed out. Each sheet is 4 columns (down, up, left, right) by 7 rows
+## (rows 0-3 walk cycle, 4 attack, 5 jump, 6 hurt/cheer) of 16x16 frames.
+const CHARACTERS: Array[int] = [6, 19, 1, 20, 24, 22, 16, 23, 14, 15, 25, 9, 11, 5, 10, 13, 17, 21, 12, 18, 3, 7, 2]
+const NINJA := "res://assets/ninja_adventure/"
 
 var _tex := {}
 var _mat := {}
@@ -163,62 +144,30 @@ func _add_surface(mesh: ArrayMesh, quads: Array, mat: Material) -> void:
 	st.commit(mesh)
 
 
-# --- Characters -----------------------------------------------------------------
+# --- Characters & pack sprites -------------------------------------------------------
 
-## 3x3 sheet of 16x18 frames. Rows: facing down, facing up, facing right.
-## Columns: idle, step A, step B.
-func character_sheet(color: Color, hair_index := 0) -> Texture2D:
-	var key := "char:%s:%d" % [color.to_html(), hair_index]
-	if _tex.has(key):
-		return _tex[key]
-	var pal := {
-		"o": OUTLINE, "e": OUTLINE, "h": color, "H": color.darkened(0.3),
-		"r": HAIR_COLORS[hair_index % HAIR_COLORS.size()], "s": Color("f2c29b"), "S": Color("d99a76"),
-		"c": color.lightened(0.65), "C": color.lightened(0.35), "p": Color("3b4a7a"), "b": Color("4a3328"),
-	}
-	var img := Image.create_empty(48, 54, false, Image.FORMAT_RGBA8)
-	var front := _mirror(FRONT_HALF)
-	var back := _mirror(BACK_HALF)
-	var rows := [front, back, SIDE]
-	for r in 3:
-		var base: Array = rows[r]
-		var frames := [base, _step(base, r == 2, false), _step(base, r == 2, true)]
-		for f in 3:
-			_blit(img, frames[f], pal, f * 16, r * 18)
-	var t := ImageTexture.create_from_image(img)
-	_tex[key] = t
-	return t
+func character_texture(index: int) -> Texture2D:
+	var n: int = CHARACTERS[posmod(index, CHARACTERS.size())]
+	return load("%scharacters/%d.png" % [NINJA, n])
 
 
-func _mirror(half: Array[String]) -> Array:
-	var out := []
-	for row in half:
-		var mirrored := ""
-		for i in range(row.length() - 1, -1, -1):
-			mirrored += row[i]
-		out.append(row + mirrored)
-	return out
+## A sprite from the Ninja Adventure pack, e.g. pack("items/shuriken").
+func pack(path: String) -> Texture2D:
+	return load("%s%s.png" % [NINJA, path])
 
 
-func _step(base: Array, side: bool, second: bool) -> Array:
-	var out := base.duplicate()
-	if side:
-		if second:
-			# Bob: whole sprite one pixel up.
-			out.pop_front()
-			out.append("................")
-		else:
-			out[15] = SIDE_STRIDE[0]
-			out[16] = SIDE_STRIDE[1]
-			out[17] = SIDE_STRIDE[2]
-		return out
-	# Front/back: lift one foot by shortening that leg one pixel.
-	var lo := 8 if second else 0
-	var r16: String = out[16]
-	var r17: String = out[17]
-	out[16] = r16.substr(0, lo) + r17.substr(lo, 8) + r16.substr(lo + 8)
-	out[17] = r17.substr(0, lo) + "........" + r17.substr(lo + 8)
-	return out
+## Billboarded pixel sprite of a pack image. `frames` > 1 splits it into a horizontal strip.
+func pack_sprite(path: String, frames := 1, px_size := PIXEL_SIZE) -> Sprite3D:
+	var s := Sprite3D.new()
+	s.texture = pack(path)
+	s.hframes = frames
+	s.pixel_size = px_size
+	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	s.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	s.shaded = false
+	s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	s.layers = 2
+	return s
 
 
 func _blit(img: Image, rows: Array, pal: Dictionary, ox: int, oy: int) -> void:

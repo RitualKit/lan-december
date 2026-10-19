@@ -26,6 +26,7 @@ func _init() -> void:
 		"The circle hops somewhere new every few seconds.",
 	]
 	action_name = "Dash"
+	powerups_enabled = true
 	accent = Ui.GOLD
 	time_limit = 45.0
 	bump_power = 10.0

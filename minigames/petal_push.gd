@@ -14,6 +14,7 @@ func _init() -> void:
 		"Last one standing wins.",
 	]
 	action_name = "Dash"
+	powerups_enabled = true
 	accent = Color("f4a6c8")
 	time_limit = 70.0
 	last_standing = true

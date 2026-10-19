@@ -1,6 +1,7 @@
 extends Node
 ## Tiny chiptune synthesizer: every sound effect is generated at startup, no audio files needed.
 ## Drop an .ogg/.wav with the same name into res://assets/sfx/ to override one.
+## A few sounds come from the Ninja Adventure pack (FILES).
 
 const RATE := 22050
 const VOICES := 16
@@ -8,6 +9,13 @@ const VOICES := 16
 var _streams := {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
+
+const FILES := {
+	"powerup": "res://assets/ninja_adventure/sounds/power-up.ogg",
+	"magic": "res://assets/ninja_adventure/sounds/magic-1.ogg",
+	"throw": "res://assets/ninja_adventure/sounds/sword.ogg",
+	"ko": "res://assets/ninja_adventure/sounds/kill.ogg",
+}
 
 # name -> list of tones: [wave, freq_start, freq_end, duration, volume, delay, lowpass]
 const SOUNDS := {
@@ -75,6 +83,8 @@ func get_stream(sound: String) -> AudioStream:
 		if ResourceLoader.exists(path):
 			stream = load(path)
 			break
+	if stream == null and FILES.has(sound):
+		stream = load(FILES[sound])
 	if stream == null and SOUNDS.has(sound):
 		stream = synth(SOUNDS[sound])
 	if stream == null:

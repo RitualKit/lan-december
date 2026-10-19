@@ -1,13 +1,14 @@
 extends Minigame
 ## Join screen. Everyone runs around a little island; press action to join,
-## step on the pads to add/remove CPUs or change the round count, and stand on
-## START together to begin.
+## step on the pads to add/remove CPUs, change your character or the round count,
+## and stand on START together to begin.
 
 const START_HOLD := 3.0
 const ISLAND_RADIUS := 5.2
 
 var pads := {} ## name -> {"pos": Vector3, "radius": float, "label": Label3D, "mesh": MeshInstance3D, "armed": bool}
 var _start_t := 0.0
+var _on_swap := {} ## Characters standing on the NEW LOOK pad (each swaps once per visit).
 var _hint: Label
 var _count_label: Label
 
@@ -39,6 +40,7 @@ func build() -> void:
 	_add_pad("bot_add", Vector3(-3.0, 0, 1.6), 0.7, Color("6ad06a"), "+ CPU")
 	_add_pad("bot_remove", Vector3(-1.4, 0, 3.4), 0.7, Color("e8645a"), "- CPU")
 	_add_pad("rounds", Vector3(3.0, 0, 1.8), 0.7, Color("7ab0ff"), "")
+	_add_pad("swap", Vector3(1.4, 0, 3.4), 0.7, Color("c88cff"), "NEW LOOK")
 	_update_pad_labels()
 
 	for slot in players:
@@ -76,6 +78,8 @@ func _build_hud() -> void:
 	v.add_child(Ui.body("SPACE  ·  ENTER  ·  (A)", 18))
 	v.add_child(Ui.label("MOVE / DASH", 22, Ui.GOLD, 6))
 	v.add_child(Ui.body("WASD  ·  Arrows  ·  Stick, then action", 18))
+	v.add_child(Ui.label("USE ITEM", 22, Ui.GOLD, 6))
+	v.add_child(Ui.body("E  ·  Right Shift  ·  (X)", 18))
 	v.add_child(Ui.body("Leave: E · Backspace · (B)", 16, Color("b8b0c8")))
 	help.add_child(v)
 	root.add_child(help)
@@ -180,6 +184,9 @@ func tick(delta: float) -> void:
 		pad.decal.emission_energy = 2.5 if not on.is_empty() else 0.5
 		if pad_name == "start":
 			continue
+		if pad_name == "swap":
+			_swap_looks(on)
+			continue
 		if on.is_empty():
 			pad.armed = true
 		elif pad.armed:
@@ -220,6 +227,19 @@ func tick(delta: float) -> void:
 func _on_pad(ch: PlayerCharacter, pad: Dictionary) -> bool:
 	var d: Vector3 = ch.global_position - pad.pos
 	return ch.alive and ch.is_on_floor() and Vector2(d.x, d.z).length() < pad.radius
+
+
+func _swap_looks(on: Array) -> void:
+	for ch in on:
+		if not _on_swap.has(ch):
+			var slot: PlayerSlot = ch.slot
+			slot.character = Game.next_free_character(slot.character)
+			ch.sprite.texture = Art.character_texture(slot.character)
+			Sfx.play("powerup", 1.2, -4.0)
+			Fx.anim(arena, ch.global_position + Vector3.UP * 0.5, "fx/18", 1.4)
+	_on_swap.clear()
+	for ch in on:
+		_on_swap[ch] = true
 
 
 func _add_bot() -> void:

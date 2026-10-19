@@ -31,6 +31,7 @@ func _ready() -> void:
 			ch.position = Vector3(-2.5 + front * 1.0, 0.2, 1.4 + (front % 2) * 0.5)
 			front += 1
 		ch.frozen = true
+		ch.cheering = i == 0
 		chars.append(ch)
 	_build_ui(standings)
 	Sfx.play("fanfare")

@@ -2,6 +2,7 @@ extends Node
 ## Renders screenshots for visual review (needs a display; use xvfb-run on servers).
 ##   GAME=res://minigames/x.gd  N=4  TIMES=3,8  OUT=/path/prefix  -> minigame with CPUs
 ##   GAME=match  N=4  TIMES=1,6,...                                -> full match flow from main.tscn
+##   ITEMS=1 keeps handing CPUs random power-ups (to see the effects).
 ##   HUMAN=1 adds an idle human so intro/results cards stay up until their timeout.
 ##   GAME=lobby  N=4                                               -> lobby with CPUs joined
 
@@ -29,6 +30,16 @@ func _ready() -> void:
 		add_child(mg)
 		mg.setup(Game.players)
 		mg.begin()
+		if OS.get_environment("ITEMS") != "" and mg.powerups:
+			var feed := func():
+				for ch in mg.alive_chars():
+					if not mg.powerups.held.has(ch):
+						mg.powerups.give(ch, mg.powerups._roll())
+			var timer := Timer.new()
+			timer.wait_time = 0.7
+			timer.autostart = true
+			timer.timeout.connect(feed)
+			add_child(timer)
 	var t := 0.0
 	for i in times.size():
 		while t < times[i]:

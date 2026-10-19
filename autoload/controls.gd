@@ -1,22 +1,29 @@
 extends Node
 ## Per-device input for local multiplayer. Each player owns one device:
-##   "kb0"  WASD + Space (action) + E (back)
-##   "kb1"  Arrows + Enter (action) + Backspace (back)
-##   "padN" Left stick / D-pad + A (action) + B (back) + Start (pause)
+##   "kb0"  WASD + Space (action) + E/Q (item) + E (back)
+##   "kb1"  Arrows + Enter (action) + Right Shift or / (item) + Backspace (back)
+##   "padN" Left stick / D-pad + A (action) + X/B (item) + B (back) + Start (pause)
 ## States are polled once per physics tick (this autoload runs before the scene).
 
 const DEADZONE := 0.3
-const BUTTONS := ["action", "back", "pause", "bot_add", "bot_remove"]
+const BUTTONS := ["action", "item", "back", "pause", "bot_add", "bot_remove"]
 
 var _state := {}
 var _prev := {}
 ## Tests and tools can force a device's state: device -> {move, action, ...}
 var injected := {}
+var _right_shift := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	process_physics_priority = -100
+
+
+func _input(event: InputEvent) -> void:
+	# Polling can't tell left from right Shift, so track the right one from events.
+	if event is InputEventKey and event.keycode == KEY_SHIFT and event.location == KEY_LOCATION_RIGHT:
+		_right_shift = event.pressed
 
 
 func devices() -> Array[String]:
@@ -34,6 +41,13 @@ func device_label(device: String) -> String:
 	if device.begins_with("pad"):
 		return "Pad %d" % (int(device.substr(3)) + 1)
 	return "CPU"
+
+
+func item_hint(device: String) -> String:
+	match device:
+		"kb0": return "E"
+		"kb1": return "R-SHIFT"
+	return "X"
 
 
 func action_hint(device: String) -> String:
@@ -85,6 +99,7 @@ func _poll(device: String) -> Dictionary:
 	if device == "kb0":
 		s.move = _keys(KEY_A, KEY_D, KEY_W, KEY_S)
 		s.action = Input.is_physical_key_pressed(KEY_SPACE)
+		s.item = Input.is_physical_key_pressed(KEY_E) or Input.is_physical_key_pressed(KEY_Q)
 		s.back = Input.is_physical_key_pressed(KEY_E)
 		s.pause = Input.is_physical_key_pressed(KEY_ESCAPE)
 		s.bot_add = Input.is_physical_key_pressed(KEY_EQUAL) or Input.is_physical_key_pressed(KEY_KP_ADD)
@@ -92,6 +107,7 @@ func _poll(device: String) -> Dictionary:
 	elif device == "kb1":
 		s.move = _keys(KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN)
 		s.action = Input.is_physical_key_pressed(KEY_ENTER) or Input.is_physical_key_pressed(KEY_KP_ENTER)
+		s.item = _right_shift or Input.is_physical_key_pressed(KEY_SLASH)
 		s.back = Input.is_physical_key_pressed(KEY_BACKSPACE)
 		s.pause = false
 		s.bot_add = false
@@ -106,6 +122,7 @@ func _poll(device: String) -> Dictionary:
 			float(Input.is_joy_button_pressed(id, JOY_BUTTON_DPAD_DOWN)) - float(Input.is_joy_button_pressed(id, JOY_BUTTON_DPAD_UP)))
 		s.move = v.limit_length(1.0)
 		s.action = Input.is_joy_button_pressed(id, JOY_BUTTON_A)
+		s.item = Input.is_joy_button_pressed(id, JOY_BUTTON_X) or Input.is_joy_button_pressed(id, JOY_BUTTON_B)
 		s.back = Input.is_joy_button_pressed(id, JOY_BUTTON_B)
 		s.pause = Input.is_joy_button_pressed(id, JOY_BUTTON_START)
 		s.bot_add = Input.is_joy_button_pressed(id, JOY_BUTTON_RIGHT_SHOULDER)

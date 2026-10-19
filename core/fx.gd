@@ -111,6 +111,30 @@ static func confetti(parent: Node, pos: Vector3, colors: Array[Color]) -> void:
 		p.emitting = true
 
 
+## Plays a Ninja Adventure effect strip (32x32 frames) once, e.g. anim(arena, p, "fx/18").
+static func anim(parent: Node, pos: Vector3, path: String, scale := 1.0, fps := 14.0) -> Sprite3D:
+	if parent == null or not parent.is_inside_tree():
+		return null
+	var tex := Art.pack(path)
+	var frames := maxi(1, tex.get_width() / 32)
+	var s := Art.pack_sprite(path, frames, Art.PIXEL_SIZE * scale)
+	s.no_depth_test = true
+	s.render_priority = 1
+	parent.add_child(s)
+	s.global_position = pos
+	var tw := s.create_tween()
+	tw.tween_property(s, "frame", frames - 1, frames / fps).from(0)
+	tw.tween_interval(1.0 / fps)
+	tw.tween_callback(s.queue_free)
+	return s
+
+
+static func explosion_big(parent: Node, pos: Vector3, radius: float) -> void:
+	anim(parent, pos + Vector3.UP * 0.5, "fx/12", radius * 1.4, 12.0)
+	anim(parent, pos + Vector3.UP * 0.6, "fx/18", radius * 0.9, 12.0)
+	burst(parent, pos + Vector3.UP * 0.3, Color("ffd36b"), 30, 8.0)
+
+
 ## Floating text such as "+1" that rises and fades.
 static func popup(parent: Node, pos: Vector3, text: String, color := Color.WHITE, size := 48) -> void:
 	if parent == null or not parent.is_inside_tree():

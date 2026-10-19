@@ -19,6 +19,7 @@ func _init() -> void:
 		"Most blossoms when time runs out wins.",
 	]
 	action_name = "Dash"
+	powerups_enabled = true
 	accent = Color("ffb3d6")
 	time_limit = 40.0
 	bump_power = 8.0

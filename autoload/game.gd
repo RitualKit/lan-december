@@ -45,10 +45,24 @@ func add_player(device: String, bot := false) -> PlayerSlot:
 		id += 1
 	var slot := PlayerSlot.new(id, device, bot)
 	slot.skill = rng.randf_range(0.55, 0.95)
+	slot.character = next_free_character(-1)
 	players.append(slot)
 	players.sort_custom(func(a, b): return a.id < b.id)
 	players_changed.emit()
 	return slot
+
+
+## The next character after `after` that nobody is using.
+func next_free_character(after: int) -> int:
+	var used := {}
+	for p in players:
+		used[p.character] = true
+	var n := Art.CHARACTERS.size()
+	for step in range(1, n + 1):
+		var c := posmod(after + step, n)
+		if not used.has(c):
+			return c
+	return posmod(after + 1, n)
 
 
 func remove_player(slot: PlayerSlot) -> void:

@@ -151,6 +151,8 @@ func _catch(ch: PlayerCharacter) -> void:
 	Fx.popup(arena, ch.global_position + Vector3.UP * 1.8, "CATCH!", Ui.GOLD, 56)
 	Fx.burst(arena, ch.global_position + Vector3.UP * 1.0, Color("ff9a5a"), 20, 4.0)
 	ch.velocity.y = 6.0
+	ch.cheering = true
+	get_tree().create_timer(1.2).timeout.connect(func(): if is_instance_valid(ch): ch.cheering = false)
 	# The koi leaps to the winner.
 	var tw := _fish.create_tween()
 	tw.tween_property(_fish, "position", ch.global_position + Vector3.UP * 1.4, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

@@ -12,6 +12,8 @@ func _ready() -> void:
 	var only := OS.get_environment("ONLY")
 	if only == "" or only == "unit":
 		_unit()
+	if only == "" or only == "powerups":
+		await _powerups()
 	if only == "" or only == "minigames":
 		await _minigames()
 	if only == "" or only == "match":
@@ -29,16 +31,27 @@ func check(cond: bool, what: String) -> void:
 
 func _unit() -> void:
 	print("== unit")
-	for row in Art.FRONT_HALF + Art.BACK_HALF:
-		check(row.length() == 8, "front/back half rows are 8 wide: '%s'" % row)
-	for row in Art.SIDE + Art.SIDE_STRIDE:
-		check(row.length() == 16, "side rows are 16 wide: '%s'" % row)
-	check(Art.FRONT_HALF.size() == 18 and Art.BACK_HALF.size() == 18 and Art.SIDE.size() == 18, "18 rows per frame")
+	for i in Art.CHARACTERS.size():
+		var sheet := Art.character_texture(i)
+		check(sheet != null and sheet.get_width() == 64 and sheet.get_height() == 112, "character %d sheet is 4x7 frames of 16x16" % Art.CHARACTERS[i])
+	for item in Powerups.ITEMS:
+		check(Powerups.icon_of(item) != null, "power-up icon for %s" % item)
+	for fx in ["fx/1", "fx/2", "fx/4", "fx/7", "fx/12", "fx/15", "fx/18"]:
+		check(Art.pack(fx) != null and Art.pack(fx).get_height() == 32, "effect strip %s" % fx)
+	for sound in Sfx.FILES:
+		check(Sfx.get_stream(sound) != null, "pack sound %s" % sound)
 	for icon_name in Art.ICONS:
 		var rows: Array = Art.ICONS[icon_name]
 		check(rows.all(func(r): return r.length() == rows[0].length()), "icon '%s' rows equal width" % icon_name)
-	var sheet := Art.character_sheet(Color.RED, 2)
-	check(sheet.get_width() == 48 and sheet.get_height() == 54, "character sheet is 3x3 frames of 16x18")
+	Game.players.clear()
+	for i in 4:
+		Game.add_player("", true)
+	var looks := {}
+	for p in Game.players:
+		looks[p.character] = true
+	check(looks.size() == 4, "every player gets a different character")
+	check(not looks.has(Game.next_free_character(Game.players[0].character)), "NEW LOOK picks an unused character")
+	Game.players.clear()
 	for t in ["grass", "cliff", "cliff_top", "path", "bark", "blossom", "leaves", "rock", "wood", "cloth", "paint_ff0000"]:
 		check(Art.texture(t).get_width() == 16, "texture %s generated" % t)
 
@@ -112,6 +125,56 @@ func _minigames() -> void:
 				print("  %-22s %d players: %5.1fs, winner group %s" % [path.get_file(), n, frames / 60.0, ranking[0].map(func(s): return s.display_name)])
 			mg.queue_free()
 			await get_tree().process_frame
+
+
+## Fire every item at a standing target and check it does something.
+func _powerups() -> void:
+	print("== powerups")
+	for item in Powerups.ITEMS:
+		var mg: Minigame = load("res://minigames/petal_push.gd").new()
+		add_child(mg)
+		mg.setup(_bots(3))
+		mg.begin()
+		var user := mg.chars[0]
+		var target := mg.chars[1]
+		var bystander := mg.chars[2]
+		for ch in mg.chars:
+			ch.input_provider = Callable() # stand still
+		user.global_position = Vector3(-2, 0.05, 0)
+		user.facing = Vector3.RIGHT
+		target.global_position = Vector3(-2 + (4.5 if item == "bomb" else 1.5), 0.05, 0)
+		bystander.global_position = Vector3(-2, 0.05, -3.5)
+		await get_tree().physics_frame
+		var start := target.global_position
+		mg.powerups.give(user, item)
+		check(mg.powerups.held.get(user) == item, "%s: picked up" % item)
+		check(mg.powerups.use(user), "%s: used" % item)
+		check(not mg.powerups.held.has(user), "%s: used up" % item)
+		var affected := false
+		for f in 90:
+			await get_tree().physics_frame
+			if target.stun > 0.0 or target.has_status("frozen") or not target.alive or target.global_position.distance_to(start) > 0.3:
+				affected = true
+		match item:
+			"giant", "speed", "shield":
+				check(user.has_status(item), "%s: buff active on user" % item)
+			_:
+				check(affected, "%s: hits the target" % item)
+		print("  %-10s ok" % item)
+		mg.queue_free()
+		await get_tree().process_frame
+
+	# A shield blocks a dash hit.
+	var mg2: Minigame = load("res://minigames/petal_push.gd").new()
+	add_child(mg2)
+	mg2.setup(_bots(2))
+	mg2.begin()
+	var shielded := mg2.chars[1]
+	shielded.add_status("shield", 5.0)
+	check(not shielded.hit(Vector3.RIGHT * 10.0, 0.3), "shield blocks knockback")
+	check(shielded.knock.length() == 0.0, "shielded player isn't moved")
+	mg2.queue_free()
+	await get_tree().process_frame
 
 
 func _full_match() -> void:

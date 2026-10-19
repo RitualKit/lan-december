@@ -24,6 +24,9 @@ func _init() -> void:
 		"When it bursts, its holder is out. Last one standing wins.",
 	]
 	action_name = "Dash"
+	powerups_enabled = true
+	# Only items that stop people, not ones that blast them into the sea.
+	powerup_items = ["ice", "thunder", "speed", "shield"]
 	accent = Color("ff9a4a")
 	time_limit = 0.0
 	last_standing = true

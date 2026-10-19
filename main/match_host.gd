@@ -72,7 +72,14 @@ func _intro() -> void:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		v.add_child(l)
 	v.add_child(_spacer(6))
+	if minigame.powerups_enabled:
+		var l := Ui.body("> Open treasure chests for power-ups: bombs, shurikens, spells!", 21, Color("ffd6e8"))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		v.add_child(l)
+		v.add_child(_spacer(6))
 	v.add_child(Ui.label("SPACE · ENTER · (A)  =  %s" % minigame.action_name.to_upper(), 22, Ui.GOLD, 6))
+	if minigame.powerups_enabled:
+		v.add_child(Ui.label("E · RIGHT SHIFT · (X)  =  USE ITEM", 22, Color("ffd6e8"), 6))
 	v.add_child(_spacer(4))
 
 	var ready_row := HBoxContainer.new()
