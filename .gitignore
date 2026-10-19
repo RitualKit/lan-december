@@ -1,0 +1,10 @@
+# Godot 4
+.godot/
+/android/
+*.translation
+
+# Exports
+/build/
+*.pck
+*.exe
+*.x86_64
