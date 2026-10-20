@@ -77,7 +77,7 @@ func _paint(t: ArenaTile, slot: PlayerSlot) -> void:
 func _spawn_bomb() -> void:
 	var tiles := arena.solid_tiles()
 	var t: ArenaTile = tiles[rng.randi() % tiles.size()]
-	var s := Art.icon_sprite("bomb", Color("7ab0ff"), Color("ffe066"), 0.08)
+	var s: Node3D = Props.bomb(Color("3f7fe8")) if Game.look_3d else Art.icon_sprite("bomb", Color("7ab0ff"), Color("ffe066"), 0.08)
 	arena.add_child(s)
 	s.position = Vector3(t.cell.x, 0.45, t.cell.y)
 	_bombs.append({"node": s, "pos": s.position})

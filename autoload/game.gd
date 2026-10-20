@@ -28,6 +28,8 @@ const MINIGAMES: Array[String] = [
 
 var players: Array[PlayerSlot] = []
 var rounds_total := 10
+## Blocky 3D characters and pickups instead of pixel sprites (lobby LOOK pad).
+var look_3d := false
 var round_number := 0 ## 1-based, 0 before the first round.
 var round_plan: Array[String] = []
 var rng := RandomNumberGenerator.new()

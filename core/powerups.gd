@@ -71,12 +71,14 @@ func spawn_chest() -> void:
 			continue
 		if mg.alive_chars().any(func(ch): return ch.global_position.distance_to(pos) < 1.2):
 			continue
-		var s := Art.pack_sprite("items/little-treasure-chest", 2, Art.PIXEL_SIZE * 1.4)
+		var s: Node3D = Props.chest() if Game.look_3d else Art.pack_sprite("items/little-treasure-chest", 2, Art.PIXEL_SIZE * 1.4)
+		var lift := 0.02 if Game.look_3d else 0.45
 		mg.arena.add_child(s)
 		s.global_position = pos + Vector3.UP * 6.0
+		s.rotation.y = mg.rng.randf_range(-0.5, 0.5)
 		var tw := s.create_tween()
-		tw.tween_property(s, "global_position", pos + Vector3.UP * 0.45, 0.45).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-		chests.append({"node": s, "pos": pos, "age": 0.0})
+		tw.tween_property(s, "global_position", pos + Vector3.UP * lift, 0.45).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+		chests.append({"node": s, "pos": pos, "age": 0.0, "lift": lift})
 		return
 
 
@@ -95,14 +97,14 @@ func _update_chests(delta: float) -> void:
 	for i in range(chests.size() - 1, -1, -1):
 		var c := chests[i]
 		c.age += delta
-		var node: Sprite3D = c.node
+		var node: Node3D = c.node
 		if not mg.arena.is_safe(c.pos):
 			node.queue_free()
 			chests.remove_at(i)
 			continue
 		if c.age < 0.45:
 			continue
-		node.position.y = c.pos.y + 0.45 + sin(c.age * 3.0) * 0.06
+		node.position.y = c.pos.y + c.lift + absf(sin(c.age * 3.0)) * 0.06
 		for ch in mg.alive_chars():
 			if held.has(ch):
 				continue
@@ -114,8 +116,11 @@ func _update_chests(delta: float) -> void:
 
 
 func _open(c: Dictionary, ch: PlayerCharacter) -> void:
-	var node: Sprite3D = c.node
-	node.frame = 1
+	var node: Node3D = c.node
+	if node is Sprite3D:
+		(node as Sprite3D).frame = 1
+	else:
+		node.get_node("Lid").rotation.x = -1.6
 	var tw := node.create_tween()
 	tw.tween_property(node, "scale", Vector3.ONE * 1.3, 0.12)
 	tw.tween_property(node, "scale", Vector3.ZERO, 0.15)
@@ -195,7 +200,7 @@ func _away(from: Vector3, to: Vector3) -> Vector3:
 
 
 func _throw_bomb(ch: PlayerCharacter) -> void:
-	var s := Art.icon_sprite("bomb", Color("4a4458"), Color("ff9a4a"), 0.07)
+	var s: Node3D = Props.bomb() if Game.look_3d else Art.icon_sprite("bomb", Color("4a4458"), Color("ff9a4a"), 0.07)
 	mg.arena.add_child(s)
 	var from := ch.global_position + Vector3.UP * 0.8
 	var to := ch.global_position + ch.facing * 4.5
@@ -207,7 +212,7 @@ func _throw_bomb(ch: PlayerCharacter) -> void:
 func _update_bombs(delta: float) -> void:
 	for i in range(_bombs.size() - 1, -1, -1):
 		var b := _bombs[i]
-		var node: Sprite3D = b.node
+		var node: Node3D = b.node
 		b.t += delta
 		if b.t < BOMB_FLIGHT:
 			var k: float = b.t / BOMB_FLIGHT
@@ -226,7 +231,11 @@ func _update_bombs(delta: float) -> void:
 		landed.y = tile.top_y
 		node.global_position = landed + Vector3.UP * 0.35
 		b.fuse -= delta
-		node.modulate = Color(3, 1.5, 1.5) if int(b.fuse * 12.0) % 2 == 0 else Color.WHITE
+		var blink := int(b.fuse * 12.0) % 2 == 0
+		if node is Sprite3D:
+			(node as Sprite3D).modulate = Color(3, 1.5, 1.5) if blink else Color.WHITE
+		else:
+			node.scale = Vector3.ONE * (1.25 if blink else 1.0)
 		if b.fuse <= 0.0:
 			_explode(b.owner, landed)
 			node.queue_free()
@@ -248,9 +257,14 @@ func _throw_shurikens(ch: PlayerCharacter) -> void:
 	Sfx.play("throw", 1.2)
 	for spread in [-0.28, 0.0, 0.28]:
 		var dir := ch.facing.rotated(Vector3.UP, spread)
-		var s := Art.pack_sprite("items/shuriken", 1, 0.05)
-		s.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		s.rotation_degrees.x = -90.0
+		var s: Node3D
+		if Game.look_3d:
+			s = Props.shuriken()
+		else:
+			var sprite := Art.pack_sprite("items/shuriken", 1, 0.05)
+			sprite.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+			sprite.rotation_degrees.x = -90.0
+			s = sprite
 		mg.arena.add_child(s)
 		s.global_position = ch.global_position + Vector3.UP * 0.5 + dir * 0.4
 		_shots.append({"node": s, "owner": ch, "vel": dir * 13.0, "life": 0.7})
@@ -259,7 +273,7 @@ func _throw_shurikens(ch: PlayerCharacter) -> void:
 func _update_shots(delta: float) -> void:
 	for i in range(_shots.size() - 1, -1, -1):
 		var s := _shots[i]
-		var node: Sprite3D = s.node
+		var node: Node3D = s.node
 		node.global_position += s.vel * delta
 		node.rotate_y(delta * 25.0)
 		s.life -= delta

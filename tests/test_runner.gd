@@ -101,6 +101,7 @@ func _minigames() -> void:
 	var only_game := OS.get_environment("GAME")
 	for path in Game.MINIGAMES.filter(func(p): return only_game == "" or p.contains(only_game)):
 		for n in [2, 4, 8]:
+			Game.look_3d = n == 4 # Exercise the 3D look too.
 			var players := _bots(n)
 			var mg: Minigame = load(path).new()
 			add_child(mg)
@@ -131,7 +132,10 @@ func _minigames() -> void:
 ## Fire every item at a standing target and check it does something.
 func _powerups() -> void:
 	print("== powerups")
+	var flip := false
 	for item in Powerups.ITEMS:
+		flip = not flip
+		Game.look_3d = flip
 		var mg: Minigame = load("res://minigames/petal_push.gd").new()
 		add_child(mg)
 		mg.setup(_bots(3))

@@ -43,7 +43,8 @@ var _item_icon: Sprite3D
 var _bubble: MeshInstance3D
 var _ice: MeshInstance3D
 
-var sprite: Sprite3D
+var sprite: Sprite3D ## Pixel look.
+var body3d: BlockyBody ## 3D look (Game.look_3d).
 var marker: GroundMark
 var label: Label3D
 var carry_anchor: Node3D
@@ -62,19 +63,13 @@ func _init(p_slot: PlayerSlot) -> void:
 	shape.position.y = 0.45
 	add_child(shape)
 
-	sprite = Sprite3D.new()
-	sprite.texture = Art.character_texture(slot.character)
-	sprite.hframes = 4
-	sprite.vframes = 7
-	sprite.pixel_size = Art.PIXEL_SIZE
-	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sprite.layers = 2
-	sprite.shaded = false
-	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	sprite.offset = Vector2(0, 8)
-	sprite.position.y = 0.02
-	add_child(sprite)
+	if Game.look_3d:
+		body3d = BlockyBody.new()
+		body3d.setup(BlockyBody.look_for(slot.character), slot.color)
+		body3d.scale = Vector3.ONE * BlockyBody.SCALE
+		add_child(body3d)
+	else:
+		_make_sprite()
 
 	marker = GroundMark.new(Art.marker_texture(slot.color), Vector3(1.1, 2.5, 1.1))
 	marker.position.y = -0.2 if GroundMark.use_decals else 0.0
@@ -109,6 +104,30 @@ func _init(p_slot: PlayerSlot) -> void:
 	carry_anchor = Node3D.new()
 	carry_anchor.position.y = 1.35
 	add_child(carry_anchor)
+
+
+func _make_sprite() -> void:
+	sprite = Sprite3D.new()
+	sprite.texture = Art.character_texture(slot.character)
+	sprite.hframes = 4
+	sprite.vframes = 7
+	sprite.pixel_size = Art.PIXEL_SIZE
+	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sprite.layers = 2
+	sprite.shaded = false
+	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	sprite.offset = Vector2(0, 8)
+	sprite.position.y = 0.02
+	add_child(sprite)
+
+
+## Switch to another character look (lobby NEW LOOK pad).
+func set_character(index: int) -> void:
+	if body3d:
+		body3d.setup(BlockyBody.look_for(index), slot.color)
+	else:
+		sprite.texture = Art.character_texture(index)
 
 
 func _physics_process(delta: float) -> void:
@@ -221,7 +240,10 @@ func _tick_status(delta: float) -> void:
 func _update_status_visuals() -> void:
 	var giant := has_status("giant")
 	var s := size_scale()
-	sprite.pixel_size = Art.PIXEL_SIZE * s
+	if sprite:
+		sprite.pixel_size = Art.PIXEL_SIZE * s
+	else:
+		body3d.scale = Vector3.ONE * s * BlockyBody.SCALE
 	marker.size = Vector3(1.1 * s, 2.5, 1.1 * s)
 	label.position.y = 1.4 * (1.45 if giant else 1.0)
 	_item_icon.position.y = label.position.y + 0.55
@@ -306,7 +328,28 @@ func _drown() -> void:
 	eliminate()
 
 
+static var _overlays := {}
+
+
+static func _overlay(c: Color, glow := 0.0) -> StandardMaterial3D:
+	var key := c.to_html() + str(glow)
+	if not _overlays.has(key):
+		var m := StandardMaterial3D.new()
+		m.albedo_color = c
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		if glow > 0.0:
+			m.emission_enabled = true
+			m.emission = Color(c, 1.0)
+			m.emission_energy_multiplier = glow
+		_overlays[key] = m
+	return _overlays[key]
+
+
 func _animate(delta: float, move: Vector3) -> void:
+	if body3d:
+		_animate_3d(delta)
+		return
 	# Sheet columns: 0 down, 1 up, 2 left, 3 right.
 	if absf(facing.x) > absf(facing.z) * 1.2:
 		_dir = 2 if facing.x < 0 else 3
@@ -347,3 +390,21 @@ func _animate(delta: float, move: Vector3) -> void:
 	elif invulnerable > 0.0 and int(invulnerable * 12.0) % 2 == 0:
 		c = Color(tint, 0.4)
 	sprite.modulate = c
+
+
+func _animate_3d(delta: float) -> void:
+	var moving := Vector2(velocity.x, velocity.z).length() > 0.5 and is_on_floor()
+	body3d.animate(delta, {
+		"facing": facing, "moving": moving, "on_floor": is_on_floor(), "dashing": _dash_left > 0.0,
+		"stunned": stun > 0.0 or has_status("frozen"), "cheering": cheering,
+	})
+	_flash = maxf(0.0, _flash - delta)
+	if _flash > 0.0:
+		body3d.set_overlay(_overlay(Color(1, 1, 1, 0.85), 2.0))
+	elif has_status("frozen"):
+		body3d.set_overlay(_overlay(Color(0.55, 0.85, 1.0, 0.55)))
+	elif tint != Color.WHITE:
+		body3d.set_overlay(_overlay(Color(tint.r * 0.4, tint.g * 0.4, tint.b * 0.45, 0.6)))
+	else:
+		body3d.set_overlay(null)
+	body3d.set_fade(0.35 if invulnerable > 0.0 and int(invulnerable * 12.0) % 2 == 0 else 1.0)

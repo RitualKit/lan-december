@@ -3,6 +3,7 @@ extends Node
 ##   GAME=res://minigames/x.gd  N=4  TIMES=3,8  OUT=/path/prefix  -> minigame with CPUs
 ##   GAME=match  N=4  TIMES=1,6,...                                -> full match flow from main.tscn
 ##   ITEMS=1 keeps handing CPUs random power-ups (to see the effects).
+##   LOOK=3d uses the blocky 3D characters and pickups.
 ##   THEME=winter forces an island theme (blossom, autumn, winter, tropical, night).
 ##   HUMAN=1 adds an idle human so intro/results cards stay up until their timeout.
 ##   GAME=lobby  N=4                                               -> lobby with CPUs joined
@@ -14,6 +15,7 @@ func _ready() -> void:
 	var out := OS.get_environment("OUT")
 	Game.players.clear()
 	Game.theme_override = OS.get_environment("THEME")
+	Game.look_3d = OS.get_environment("LOOK") == "3d"
 	for i in n:
 		Game.add_player("", true)
 	if OS.get_environment("HUMAN") != "":

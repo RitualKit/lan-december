@@ -314,3 +314,73 @@ static func sky_lantern() -> Node3D:
 	box.size = Vector3(0.22, 0.3, 0.22)
 	root.add_child(_mesh(box, Art.color_material(Color("ffb860"), 2.5)))
 	return root
+
+
+# --- 3D pickups (Game.look_3d) --------------------------------------------------------
+
+## A little five-petal blossom. Gold ones are bigger and shinier.
+static func flower(gold: bool) -> Node3D:
+	var root := Node3D.new()
+	var petal_color := Color("ffd45a") if gold else Color("f7a8cc")
+	var petal := Art.color_material(petal_color, 0.6 if gold else 0.0)
+	var s := 2.2 if gold else 1.7
+	for i in 5:
+		var a := TAU * i / 5.0
+		var p := _mesh(_sphere(0.11 * s, 0.45, 8), petal, Vector3(cos(a), 0, sin(a)) * 0.13 * s)
+		p.rotation.y = -a
+		p.scale = Vector3(1.0, 1.0, 0.7)
+		root.add_child(p)
+	root.add_child(_mesh(_sphere(0.07 * s, 0.7), Art.color_material(Color("fff6c0") if gold else Color("ffd45a")), Vector3(0, 0.03, 0)))
+	root.rotation.x = -0.5
+	var holder := Node3D.new()
+	holder.add_child(root)
+	return holder
+
+
+static func chest() -> Node3D:
+	var root := Node3D.new()
+	var wood := Art.material("wood", 2.0)
+	var gold := Art.color_material(Color("ffd45a"), 0.3)
+	var base := BoxMesh.new()
+	base.size = Vector3(0.62, 0.36, 0.44)
+	root.add_child(_mesh(base, wood, Vector3(0, 0.18, 0)))
+	var band := BoxMesh.new()
+	band.size = Vector3(0.64, 0.06, 0.46)
+	root.add_child(_mesh(band, gold, Vector3(0, 0.3, 0)))
+	var lid := Node3D.new()
+	lid.name = "Lid"
+	lid.position = Vector3(0, 0.36, -0.22)
+	var top := BoxMesh.new()
+	top.size = Vector3(0.62, 0.16, 0.44)
+	lid.add_child(_mesh(top, wood, Vector3(0, 0.08, 0.22)))
+	var lock := BoxMesh.new()
+	lock.size = Vector3(0.1, 0.12, 0.04)
+	lid.add_child(_mesh(lock, gold, Vector3(0, 0.0, 0.45)))
+	root.add_child(lid)
+	root.scale = Vector3.ONE * 1.35
+	return root
+
+
+static func bomb(body_color := Color("3a3448")) -> Node3D:
+	var root := Node3D.new()
+	root.add_child(_mesh(_sphere(0.22, 1.0, 10), Art.color_material(body_color), Vector3(0, 0.22, 0)))
+	root.add_child(_mesh(_cyl(0.07, 0.07, 0.08), Art.color_material(Color("8a8aa0")), Vector3(0, 0.45, 0)))
+	var fuse := _mesh(_cyl(0.02, 0.02, 0.16), Art.color_material(Color("c8a070")), Vector3(0.04, 0.55, 0))
+	fuse.rotation.z = -0.4
+	root.add_child(fuse)
+	root.add_child(_mesh(_sphere(0.05), Art.color_material(Color("ffb040"), 4.0), Vector3(0.08, 0.63, 0)))
+	return root
+
+
+static func shuriken() -> Node3D:
+	var root := Node3D.new()
+	var steel := Art.color_material(Color("c8d0dc"))
+	for i in 4:
+		var blade := BoxMesh.new()
+		blade.size = Vector3(0.1, 0.03, 0.32)
+		var b := _mesh(blade, steel)
+		b.rotation.y = TAU * i / 4.0 + PI / 4.0
+		b.position = Vector3(sin(b.rotation.y), 0, cos(b.rotation.y)) * 0.12
+		root.add_child(b)
+	root.add_child(_mesh(_cyl(0.06, 0.06, 0.05, 8), Art.color_material(Color("5a6070"))))
+	return root

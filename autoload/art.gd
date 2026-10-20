@@ -112,6 +112,41 @@ func tile_mesh(top: float, bottom: float, top_tex := "grass", lip_tex := "cliff_
 	return mesh
 
 
+## A box whose six faces each get their own (nearest-filtered) texture.
+## faces: {"front" (+Z), "back", "left", "right", "top", "bottom"} -> Texture2D.
+func box_mesh(size: Vector3, faces: Dictionary) -> ArrayMesh:
+	var key := "box:%s" % size
+	for f in ["front", "back", "left", "right", "top", "bottom"]:
+		key += ":%d" % faces[f].get_instance_id()
+	if _mesh.has(key):
+		return _mesh[key]
+	var h := size * 0.5
+	var mesh := ArrayMesh.new()
+	var quads := {
+		"front": [Vector3(-h.x, h.y, h.z), Vector3(h.x, h.y, h.z), Vector3(h.x, -h.y, h.z), Vector3(-h.x, -h.y, h.z), Vector3.BACK, 1.0],
+		"back": [Vector3(h.x, h.y, -h.z), Vector3(-h.x, h.y, -h.z), Vector3(-h.x, -h.y, -h.z), Vector3(h.x, -h.y, -h.z), Vector3.FORWARD, 1.0],
+		"right": [Vector3(h.x, h.y, h.z), Vector3(h.x, h.y, -h.z), Vector3(h.x, -h.y, -h.z), Vector3(h.x, -h.y, h.z), Vector3.RIGHT, 1.0],
+		"left": [Vector3(-h.x, h.y, -h.z), Vector3(-h.x, h.y, h.z), Vector3(-h.x, -h.y, h.z), Vector3(-h.x, -h.y, -h.z), Vector3.LEFT, 1.0],
+		"top": [Vector3(-h.x, h.y, -h.z), Vector3(h.x, h.y, -h.z), Vector3(h.x, h.y, h.z), Vector3(-h.x, h.y, h.z), Vector3.UP, 1.0],
+		"bottom": [Vector3(-h.x, -h.y, h.z), Vector3(h.x, -h.y, h.z), Vector3(h.x, -h.y, -h.z), Vector3(-h.x, -h.y, -h.z), Vector3.DOWN, 1.0],
+	}
+	for f in quads:
+		_add_surface(mesh, [quads[f]], texture_material(faces[f]))
+	_mesh[key] = mesh
+	return mesh
+
+
+func texture_material(tex: Texture2D) -> StandardMaterial3D:
+	var key := "tex:%d" % tex.get_instance_id()
+	if not _mat.has(key):
+		var m := StandardMaterial3D.new()
+		m.albedo_texture = tex
+		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		m.roughness = 1.0
+		_mat[key] = m
+	return _mat[key]
+
+
 func _top_quad(y: float) -> Array:
 	return [
 		Vector3(-0.5, y, -0.5), Vector3(0.5, y, -0.5), Vector3(0.5, y, 0.5), Vector3(-0.5, y, 0.5),

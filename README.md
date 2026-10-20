@@ -31,6 +31,7 @@ Everyone plays on one screen. Players use keyboards and gamepads, and CPU player
 - Walk onto **+ CPU** or **- CPU** to add or remove computer players. On keyboard, **+** and **-** also work; on a gamepad, use the shoulder buttons.
 - Walk onto **ROUNDS** to switch between 5, 10 and 15 rounds.
 - Walk onto **NEW LOOK** to switch to another character. Every player always has a different one.
+- Walk onto **3D LOOK** / **PIXEL LOOK** to switch between pixel-sprite characters and chunky 3D characters (with 3D blossoms, chests, bombs and shurikens).
 - When every human stands on **START** for 3 seconds, the match begins.
 
 ## How a match works

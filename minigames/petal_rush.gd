@@ -57,6 +57,7 @@ func tick(delta: float) -> void:
 		if p.age < 0.4:
 			continue
 		node.position.y = p.pos.y + 0.35 + sin(p.age * 4.0) * 0.08
+		node.rotation.y = p.age * 2.0
 		for ch in chars:
 			if not ch.alive:
 				continue
@@ -97,7 +98,11 @@ func _spawn_pickup(value: int) -> void:
 
 func _add_pickup(value: int, pos: Vector3, from: Vector3) -> void:
 	var gold := value > 1
-	var s := Art.icon_sprite("flower", Color("ffd45a") if gold else Color("f7a8cc"), Color("fff6c0") if gold else Color("ffe066"), 0.09 if gold else 0.07)
+	var s: Node3D
+	if Game.look_3d:
+		s = Props.flower(gold)
+	else:
+		s = Art.icon_sprite("flower", Color("ffd45a") if gold else Color("f7a8cc"), Color("fff6c0") if gold else Color("ffe066"), 0.09 if gold else 0.07)
 	arena.add_child(s)
 	s.global_position = from
 	var tw := s.create_tween()

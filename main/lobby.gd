@@ -42,6 +42,7 @@ func build() -> void:
 	_add_pad("bot_remove", Vector3(-1.4, 0, 3.4), 0.7, Color("e8645a"), "- CPU")
 	_add_pad("rounds", Vector3(3.0, 0, 1.8), 0.7, Color("7ab0ff"), "")
 	_add_pad("swap", Vector3(1.4, 0, 3.4), 0.7, Color("c88cff"), "NEW LOOK")
+	_add_pad("style", Vector3(-2.4, 0, -0.4), 0.7, Color("ffb36b"), "")
 	_update_pad_labels()
 
 	for slot in players:
@@ -149,6 +150,7 @@ func _add_pad(pad_name: String, pos: Vector3, radius: float, color: Color, text:
 
 func _update_pad_labels() -> void:
 	pads["rounds"].label.text = "%d ROUNDS" % Game.rounds_total
+	pads["style"].label.text = "3D LOOK" if not Game.look_3d else "PIXEL LOOK"
 
 
 func _spawn(slot: PlayerSlot) -> PlayerCharacter:
@@ -222,6 +224,7 @@ func tick(delta: float) -> void:
 				"bot_add": _add_bot()
 				"bot_remove": _remove_bot()
 				"rounds": _cycle_rounds()
+				"style": _toggle_style()
 
 	var on_start := humans.filter(func(c): return _on_pad(c, pads["start"]))
 	var ready := not humans.is_empty() and on_start.size() == humans.size() and players.size() >= 2
@@ -261,7 +264,7 @@ func _swap_looks(on: Array) -> void:
 		if not _on_swap.has(ch):
 			var slot: PlayerSlot = ch.slot
 			slot.character = Game.next_free_character(slot.character)
-			ch.sprite.texture = Art.character_texture(slot.character)
+			ch.set_character(slot.character)
 			Sfx.play("powerup", 1.2, -4.0)
 			Fx.anim(arena, ch.global_position + Vector3.UP * 0.5, "fx/18", 1.4)
 	_on_swap.clear()
@@ -279,6 +282,13 @@ func _remove_bot() -> void:
 		if players[i].is_bot:
 			_leave(players[i])
 			return
+
+
+func _toggle_style() -> void:
+	Game.look_3d = not Game.look_3d
+	Sfx.play("powerup")
+	# Rebuild the lobby so everyone is redrawn in the new style.
+	Game.main.goto_lobby.call_deferred()
 
 
 func _cycle_rounds() -> void:
