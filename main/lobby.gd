@@ -45,8 +45,8 @@ func build() -> void:
 	_add_pad("rounds", Vector3(3.0, 0, 1.8), 0.7, Color("7ab0ff"), "")
 	_add_pad("swap", Vector3(1.4, 0, 3.4), 0.7, Color("c88cff"), "NEW LOOK")
 	_add_pad("style", Vector3(-2.4, 0, -0.4), 0.7, Color("ffb36b"), "")
-	if Net.available:
-		_add_online_pad()
+	if Net.available or OS.has_feature("web"):
+		_add_online_pad() # on the web it's always there, to explain when online is off
 	_update_pad_labels()
 
 	for slot in players:

@@ -107,8 +107,8 @@ func _rebuild() -> void:
 	for c in _list.get_children():
 		c.queue_free()
 	_list.add_child(Ui.title("ONLINE", 40, Ui.GOLD, 10))
-	if not Net.available:
-		_list.add_child(Ui.body("Online play works in the browser version on claude.ai, for people the page is shared with.", 18))
+	if not Net.available or Net.status.begins_with("denied"):
+		_list.add_child(Ui.body(_unavailable_reason(), 18))
 		_items.append({"text": "CLOSE", "call": close})
 	elif Net.game_state == "joining":
 		_list.add_child(Ui.body("Connecting to game %s..." % Net.game_code, 20))
@@ -140,6 +140,19 @@ func _rebuild() -> void:
 		_list.add_child(row)
 	_list.add_child(Ui.body("Up/Down to choose · action to select · back to close", 15, Color("8a82a0")))
 	_box.show()
+
+
+func _unavailable_reason() -> String:
+	match Net.status:
+		"connecting":
+			return "Connecting to claude.ai... Try again in a few seconds."
+		"outside":
+			return "Online play only works when this page is opened on claude.ai."
+		"unavailable":
+			return "claude.ai didn't let this page go online for you. Make sure you're signed in to claude.ai, that the page was shared with your account from its Share menu (a public link isn't enough), and open it inside claude.ai."
+		"":
+			return "Online play works in the browser version on claude.ai, for people the page is shared with."
+	return "claude.ai refused the online connection (%s). Make sure you're signed in and the page is shared with your account, then reload." % Net.status.trim_prefix("denied:")
 
 
 func _host() -> void:

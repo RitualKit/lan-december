@@ -24,6 +24,8 @@ const SYNC_EVERY := 6 ## Ticks between the host's character snapshots.
 const UNITS := 1024.0 ## Snapshot fixed-point scale (matches PlayerCharacter.SNAP).
 
 var available := false ## The page offers a room (web build inside claude.ai).
+## Why online is (un)available: "", "outside", "connecting", "unavailable", "denied:<code>", "ready".
+var status := ""
 var connected := false
 var me := ""
 var lobby: Array = [] ## [{peer, me, p}] everyone with the page open
@@ -97,6 +99,7 @@ func _poll() -> void:
 		return
 	var was := [available, connected, lobby.size(), game.size(), game_state]
 	available = s.get("ready", false)
+	status = str(s.get("status", ""))
 	connected = s.get("connected", false)
 	me = s.get("me", "")
 	lobby = s.get("lobby", [])

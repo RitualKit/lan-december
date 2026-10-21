@@ -204,6 +204,9 @@ h1 {
 // where every page publishes its players, the host's settings and its input window.
 window.LDNet = (function () {
   let room = null, game = null, state = '', ready = false, starting = false, joinId = 0;
+  // Why online is or isn't available, shown in the game's ONLINE menu:
+  // outside (not on claude.ai), connecting, unavailable (claude.ai said no), denied, ready.
+  let status = window.claude && claude.use ? 'connecting' : 'outside';
   const sent = { lobby: {}, game: {} };
 
   function map(peers) {
@@ -214,21 +217,23 @@ window.LDNet = (function () {
     if (starting || !window.claude || !claude.use) return;
     starting = true;
     claude.use('room').then(function (r) {
-      if (!r) return;
+      if (!r) { status = 'unavailable'; return; }
       room = r;
       ready = true;
-    }, function () {});
+      status = 'ready';
+      r.onConnection(function () {}, function (e) { status = 'denied:' + (e && e.code); });
+    }, function () { status = 'unavailable'; });
   }
 
   return {
     init: init,
     poll: function () {
-      if (!room) return JSON.stringify({ ready: false });
+      if (!room) return JSON.stringify({ ready: false, status: status, test: window.__ldTest ? window.__ldTest.splice(0) : [] });
       const lobby = room.peers();
       let me = '';
       for (const p of lobby) if (p.sameTab) me = p.peer;
       return JSON.stringify({
-        ready: ready, connected: room.connected(), me: me, state: state,
+        ready: ready, status: status, connected: room.connected(), me: me, state: state,
         lobby: map(lobby), game: game && state === 'joined' ? map(game.peers()) : [],
         test: window.__ldTest ? window.__ldTest.splice(0) : [],
       });
