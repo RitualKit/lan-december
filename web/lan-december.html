@@ -21,6 +21,13 @@
 }
 html, body { height: 100%; }
 [hidden] { display: none !important; }
+/* A game, not a document: nothing on the page can be selected or highlighted. */
+html, body, * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
 body {
   margin: 0;
   overflow: hidden;
@@ -38,9 +45,6 @@ body {
   outline: none;
   image-rendering: pixelated;
   touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
 }
 #splash {
   position: fixed;
@@ -224,6 +228,10 @@ h1 {
     for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
     return bytes;
   }
+
+  // Shift+arrows, double clicks and long presses must never start a text selection.
+  document.addEventListener('selectstart', function (e) { e.preventDefault(); });
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
   const realFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
