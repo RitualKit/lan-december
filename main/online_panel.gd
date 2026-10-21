@@ -116,8 +116,9 @@ func _rebuild() -> void:
 	elif Net.in_game():
 		var role := "You're hosting" if Net.is_host else "You joined"
 		_list.add_child(Ui.body("%s game %s" % [role, Net.game_code], 20, Color("fff2c0")))
-		_items.append({"text": "LEAVE GAME", "call": _leave})
+		# CLOSE first, so a stray dash press right after stepping on the pad is harmless.
 		_items.append({"text": "CLOSE", "call": close})
+		_items.append({"text": "LEAVE GAME", "call": _leave})
 	else:
 		if Net.game_state == "error":
 			_list.add_child(Ui.body("Couldn't join that game. Try another.", 18, Color("ff8a7a")))
