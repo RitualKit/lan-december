@@ -31,6 +31,8 @@ func _fit_screen() -> void:
 
 
 func goto_lobby() -> void:
+	if Net.in_match:
+		Net.end_match()
 	Game.reset_scores()
 	_swap(Lobby.new())
 
@@ -56,7 +58,7 @@ func _swap(node: Node) -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if not (current is Node3D) or current is Lobby:
+	if not (current is Node3D) or current is Lobby or Net.in_match:
 		return
 	if Controls.any_just_pressed("pause"):
 		_set_paused(not get_tree().paused)

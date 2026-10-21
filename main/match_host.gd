@@ -8,6 +8,7 @@ const ORDINALS := ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"]
 var minigame: Minigame
 var _layer: CanvasLayer
 var _root: Control
+var _wait_label: Label
 
 
 func _ready() -> void:
@@ -16,7 +17,41 @@ func _ready() -> void:
 	add_child(_layer)
 	_root = Ui.full_rect(Control.new())
 	_layer.add_child(_root)
+	_wait_label = Ui.label("", 26, Color("fff2c0"), 8)
+	_wait_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	_wait_label.offset_top = -130
+	_wait_label.offset_bottom = -90
+	_wait_label.offset_left = -400
+	_wait_label.offset_right = 400
+	_root.add_child(_wait_label)
+	Net.match_aborted.connect(_on_aborted)
+	# Runs while the game is paused for a lockstep stall, unlike this node.
+	var status := Timer.new()
+	status.wait_time = 0.2
+	status.autostart = true
+	status.process_mode = Node.PROCESS_MODE_ALWAYS
+	status.timeout.connect(_update_net_status)
+	add_child(status)
 	_run.call_deferred()
+
+
+## Online: say so when the game is holding for someone's connection.
+func _update_net_status() -> void:
+	if not Net.lockstep:
+		return
+	if not Net.is_host and minigame and not minigame.ended and not Net.result_for(Game.round_number).is_empty():
+		# The host's round is already over: stop here and take its result.
+		Net.end_round()
+		minigame.finish()
+		return
+	_wait_label.text = "Waiting for the other players' connection..." if Net.stalled > 0.6 else ""
+
+
+func _on_aborted(reason: String) -> void:
+	Ui.banner(_root, reason.to_upper(), Color("ff8a7a"), 48, 1.6)
+	Net.end_round()
+	await get_tree().create_timer(2.2, true).timeout
+	Game.main.goto_lobby()
 
 
 func _run() -> void:
@@ -30,13 +65,24 @@ func _run() -> void:
 
 func _play_round(path: String) -> void:
 	minigame = load(path).new()
+	if Net.in_match:
+		minigame.seed_value = Net.round_seed(Game.round_number)
 	add_child(minigame)
 	minigame.setup(Game.players)
 
 	await _intro()
+	if Net.in_match:
+		await _wait_for_everyone()
 	await _countdown()
+	if Net.in_match:
+		Net.start_round(Game.round_number, minigame)
 	minigame.begin()
 	var ranking: Array = await minigame.finished
+	if Net.in_match:
+		Net.end_round()
+		ranking = await _agreed_ranking(ranking)
+		if not is_inside_tree():
+			return
 
 	Sfx.play("whistle")
 	Ui.banner(_root, "FINISH!", Ui.GOLD, 110, 0.9)
@@ -102,7 +148,8 @@ func _intro() -> void:
 	_pop_in(card)
 
 	var t := 0.0
-	var humans := Game.players.filter(func(p): return not p.is_bot)
+	# Online, each page readies its own players; the others' chips light up on the go.
+	var humans := Game.players.filter(func(p): return not p.is_bot and p.device != "net")
 	var min_time := 0.6 if humans.is_empty() else 1.0
 	while t < INTRO_TIMEOUT:
 		await get_tree().physics_frame
@@ -115,11 +162,46 @@ func _intro() -> void:
 				chips[slot].modulate = Color.WHITE
 				chips[slot].text = slot.display_name + " OK!"
 				Sfx.play("blip", 1.3)
-		if t > min_time and ready.size() == Game.players.size():
+		if t > min_time and humans.all(func(p): return ready.has(p)):
 			break
 		if humans.is_empty() and t > 1.5:
 			break
 	await _pop_out(card)
+
+
+## Online: everyone scores the host's result for the round.
+func _agreed_ranking(mine: Array) -> Array:
+	if Net.is_host:
+		Net.share_result(Game.round_number, mine)
+		return mine
+	var start := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - start < 15000:
+		var theirs := Net.result_for(Game.round_number)
+		if not theirs.is_empty():
+			_wait_label.text = ""
+			return theirs
+		if Time.get_ticks_msec() - start > 600:
+			_wait_label.text = "Waiting for the host's result..."
+		await get_tree().process_frame
+		if not is_inside_tree() or not Net.in_match:
+			return mine
+	_wait_label.text = ""
+	return mine
+
+
+## Online: tell the host we're ready and wait for its go (it waits for everyone).
+func _wait_for_everyone() -> void:
+	Net.set_ready(Game.round_number)
+	var waited := 0.0
+	while not Net.go_for(Game.round_number):
+		_wait_label.text = "Waiting for the other players..."
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
+		if Net.is_host:
+			Net.host_release(Game.round_number, waited)
+		if not is_inside_tree() or not Net.in_match:
+			return
+	_wait_label.text = ""
 
 
 func _countdown() -> void:

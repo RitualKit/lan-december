@@ -11,6 +11,7 @@ signal acted(ch: PlayerCharacter)
 
 const GRAVITY := 28.0
 const FALL_LIMIT := -1.4
+const SNAP := 1.0 / 1024.0 ## Online: grid that positions and velocities are rounded to.
 
 var slot: PlayerSlot
 var input_provider: Callable
@@ -175,6 +176,12 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	velocity = Vector3(base_velocity.x, velocity.y, base_velocity.z)
 	knock = knock.move_toward(Vector3.ZERO, 22.0 * delta)
+	if Net.lockstep:
+		# Online: collisions can differ in the last float bits between browsers (each
+		# page's physics has its own history). Rounding them off keeps pages in step.
+		global_position = global_position.snapped(Vector3.ONE * SNAP)
+		velocity = velocity.snapped(Vector3.ONE * SNAP)
+		knock = knock.snapped(Vector3.ONE * SNAP)
 
 	if global_position.y < FALL_LIMIT:
 		_drown()

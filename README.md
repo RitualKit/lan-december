@@ -2,7 +2,7 @@
 
 A local multiplayer party game for 2–8 players, built in **Godot 4.7**. Each match is 5, 10 or 15 rounds of quick minigames on floating cherry-blossom islands, in a 2.5D pixel-art style: low-poly 3D tiles with pixel textures and pixel-sprite characters.
 
-Everyone plays on one screen. Players use keyboards and gamepads, and CPU players can fill empty seats. Treasure chests with bombs, shurikens and spells let players blast each other off the islands.
+Everyone plays on one screen, or, in the browser version on claude.ai, together online from different screens. Players use keyboards and gamepads, and CPU players can fill empty seats. Treasure chests with bombs, shurikens and spells let players blast each other off the islands.
 
 ## Run it
 
@@ -33,6 +33,22 @@ Everyone plays on one screen. Players use keyboards and gamepads, and CPU player
 - Walk onto **NEW LOOK** to switch to another character. Every player always has a different one.
 - Walk onto **3D LOOK** / **PIXEL LOOK** to switch between pixel-sprite characters and chunky 3D characters (with 3D blossoms, chests, bombs and shurikens).
 - When every human stands on **START** for 3 seconds, the match begins.
+
+## Online play (browser version)
+
+When the browser version runs as a claude.ai artifact, an **ONLINE** pad appears in the lobby. Everyone who plays online must be signed in to claude.ai, and the artifact must be shared with them.
+
+1. One player walks onto **ONLINE** and picks **HOST A GAME**. A four-letter game code appears in the top right.
+2. The others open the same page, walk onto **ONLINE** and pick **JOIN** for that code.
+3. Each page can bring several local players: keyboard halves, gamepads, a touch screen. The host's **+ CPU** and **ROUNDS** pads apply to the whole game.
+4. The host stands on **START**. Every page then plays the same match, with up to 8 players in total.
+
+How it works (`autoload/net.gd`, plus the small `LDNet` bridge in `web/lan-december.html`):
+
+- **Lobby.** Only the artifact room's *presence* is used, which every viewer may set, so nobody needs edit rights. Hosts advertise their game in the shared room. Each game is a named room (`ld-<code>`), where every page lists its players and the host posts the settings and the match plan: seed, minigame order, themes and roster.
+- **Lockstep.** Every page simulates the same deterministic match, and only inputs travel. Each page records its players' inputs 10 ticks (about 170 ms) ahead and publishes the latest 40 ticks in its presence. A tick runs once every human's input for it has arrived; otherwise that page waits ("Waiting for the other players' connection...").
+- **Staying in step.** Minigames use seeded random numbers and physics-timed timers. Character positions are rounded to 1/1024 each tick, and every 6 ticks the host shares a fixed-point snapshot of all characters that the other pages move to match. This covers the last-bit differences that collision physics can produce between browsers.
+- **Results.** The host's result for each round is the one everyone scores, so the standings always agree. If a player's page closes mid-match, everyone returns to the lobby after a few seconds.
 
 ## How a match works
 
@@ -103,12 +119,12 @@ Hits from items count like dash hits: in Petal Rush they make the victim drop bl
 ## Project layout
 
 ```
-autoload/   Art (art & textures), Touch (on-screen controls), Sfx (synth), Controls (per-device input), Game (match state & scoring)
+autoload/   Art (art & textures), Touch (on-screen controls), Sfx (synth), Controls (per-device input), Game (match state & scoring), Net (online play)
 core/       Minigame base class, PlayerCharacter, Powerups, Arena/ArenaTile (island builder), water shader, Fx, Props, Ui
-main/       main.tscn (screen switcher + pause), lobby, match_host (rounds/intro/results), podium
+main/       main.tscn (screen switcher + pause), lobby, online_panel, match_host (rounds/intro/results), podium
 minigames/  One script per minigame
 tests/      Headless test suite
-tools/      run_tests.sh, capture.sh (screenshots)
+tools/      run_tests.sh, capture.sh (screenshots), build_web.sh, online_test.js (two browsers play online)
 ```
 
 ## Adding a minigame
@@ -138,6 +154,14 @@ ONLY=unit tools/run_tests.sh            # assets, characters, scoring, round pla
 ONLY=powerups tools/run_tests.sh        # fires every item at a target
 ONLY=minigames tools/run_tests.sh       # every minigame with 2/4/8 CPUs
 ONLY=match tools/run_tests.sh           # a full 10-round match through to the podium
+ONLY=lockstep tools/run_tests.sh        # every minigame replays identically under network stalls
+```
+
+The online test runs two browser pages against a fake room (needs Playwright and the web build served on port 8099):
+
+```bash
+(cd build/web && python3 -m http.server 8099 &)
+node tools/online_test.js 2             # plays 2 rounds, then one page leaves
 ```
 
 To take screenshots without a monitor (needs `xvfb-run`):

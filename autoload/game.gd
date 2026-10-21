@@ -32,6 +32,8 @@ var rounds_total := 10
 var look_3d := false
 var round_number := 0 ## 1-based, 0 before the first round.
 var round_plan: Array[String] = []
+## Online: the host's theme for each round (index = round - 1); empty offline.
+var theme_plan: Array[String] = []
 var rng := RandomNumberGenerator.new()
 ## Forces every arena to one theme (screenshots/tests); "" = rotate through Themes.
 var theme_override := ""
@@ -122,6 +124,8 @@ func plan_rounds() -> void:
 func next_theme() -> String:
 	if theme_override != "":
 		return theme_override
+	if not theme_plan.is_empty() and round_number >= 1:
+		return theme_plan[(round_number - 1) % theme_plan.size()]
 	if _theme_bag.is_empty():
 		_theme_bag = Themes.ORDER.duplicate()
 		_theme_bag.shuffle()

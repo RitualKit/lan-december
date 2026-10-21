@@ -111,7 +111,7 @@ func _respawn(ch: PlayerCharacter) -> void:
 	mem(ch).respawning = true
 	scores[ch.slot] = maxi(0, scores[ch.slot] - 1)
 	Fx.popup(arena, Vector3(ch.global_position.x, 0.5, ch.global_position.z), "-1", Color("ff8a7a"), 40)
-	await get_tree().create_timer(1.2).timeout
+	await get_tree().create_timer(1.2, false, true).timeout
 	if not is_instance_valid(ch) or ended:
 		return
 	var a := rng.randf() * TAU

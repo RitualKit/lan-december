@@ -90,5 +90,6 @@ func restore(top_tex := "") -> void:
 func _new_tween() -> Tween:
 	if _tween and _tween.is_valid():
 		_tween.kill()
-	_tween = create_tween()
+	# Physics-stepped so tile drops land on the same tick everywhere (online lockstep).
+	_tween = create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	return _tween

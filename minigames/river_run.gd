@@ -152,7 +152,7 @@ func _finish(ch: PlayerCharacter) -> void:
 
 func on_out(ch: PlayerCharacter) -> void:
 	# Swim back to the start.
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.0, false, true).timeout
 	if ended or not is_instance_valid(ch):
 		return
 	var dir: int = heading[ch.slot]

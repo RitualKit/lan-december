@@ -91,7 +91,7 @@ func tick(delta: float) -> void:
 
 
 func _in_zone(p: Vector3) -> bool:
-	return Vector2(p.x - _zone.position.x, p.z - _zone.position.z).length() < ZONE_RADIUS
+	return Vector2(p.x - zone_pos.x, p.z - zone_pos.z).length() < ZONE_RADIUS
 
 
 func _pick_spot() -> Vector3:
@@ -106,7 +106,7 @@ func _pick_spot() -> Vector3:
 
 func _respawn(ch: PlayerCharacter) -> void:
 	mem(ch).respawning = true
-	await get_tree().create_timer(1.5).timeout
+	await get_tree().create_timer(1.5, false, true).timeout
 	if not is_instance_valid(ch) or ended:
 		return
 	var a := rng.randf() * TAU

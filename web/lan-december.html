@@ -196,6 +196,77 @@ h1 {
   </div>
 </div>
 
+<script>
+// Online play. The game polls this bridge every physics frame (autoload/net.gd). It uses
+// only presence: the shared room advertises open games, and each game is a named room
+// where every page publishes its players, the host's settings and its input window.
+window.LDNet = (function () {
+  let room = null, game = null, state = '', ready = false, starting = false, joinId = 0;
+  const sent = { lobby: {}, game: {} };
+
+  function map(peers) {
+    return peers.map(function (p) { return { peer: p.peer, me: p.sameTab, p: p.presence || {} }; });
+  }
+
+  function init() {
+    if (starting || !window.claude || !claude.use) return;
+    starting = true;
+    claude.use('room').then(function (r) {
+      if (!r) return;
+      room = r;
+      ready = true;
+    }, function () {});
+  }
+
+  return {
+    init: init,
+    poll: function () {
+      if (!room) return JSON.stringify({ ready: false });
+      const lobby = room.peers();
+      let me = '';
+      for (const p of lobby) if (p.sameTab) me = p.peer;
+      return JSON.stringify({
+        ready: ready, connected: room.connected(), me: me, state: state,
+        lobby: map(lobby), game: game && state === 'joined' ? map(game.peers()) : [],
+        test: window.__ldTest ? window.__ldTest.splice(0) : [],
+      });
+    },
+    // Presence merges per key, so keys dropped since the last call are sent as null.
+    presence: function (which, text) {
+      const target = which === 'lobby' ? room : game;
+      if (!target) return;
+      let next;
+      try { next = JSON.parse(text); } catch (e) { return; }
+      const patch = Object.assign({}, next);
+      for (const k in sent[which]) if (!(k in next)) patch[k] = null;
+      sent[which] = next;
+      target.presence(patch).catch(function () {});
+    },
+    join: function (name) {
+      const id = ++joinId;
+      const old = game;
+      game = null;
+      state = 'joining';
+      sent.game = {};
+      (old ? old.leave().catch(function () {}) : Promise.resolve())
+        .then(function () { return room.join(name); })
+        .then(function (g) {
+          if (id !== joinId) { g.leave().catch(function () {}); return; }
+          game = g;
+          state = 'joined';
+        }, function () { if (id === joinId) state = 'error'; });
+    },
+    leave: function () {
+      joinId++;
+      if (game) game.leave().catch(function () {});
+      game = null;
+      state = '';
+      sent.game = {};
+    },
+  };
+}());
+window.LDNet.init();
+</script>
 <script src="index.js"></script>
 <script>
 (function () {

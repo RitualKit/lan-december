@@ -95,7 +95,7 @@ func _explode(pos: Vector3, slot: PlayerSlot) -> void:
 
 func _respawn(ch: PlayerCharacter) -> void:
 	mem(ch).respawning = true
-	await get_tree().create_timer(1.2).timeout
+	await get_tree().create_timer(1.2, false, true).timeout
 	if not is_instance_valid(ch) or ended:
 		return
 	ch.revive_at(Vector3(rng.randf_range(-2, 2), 5.0, rng.randf_range(-2, 2)))

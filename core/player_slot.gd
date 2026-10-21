@@ -4,7 +4,8 @@ extends RefCounted
 
 var id := 0 ## Colour index, 0..7. Stable for the whole session.
 var character := 0 ## Index into Art.CHARACTERS.
-var device := "" ## Controls device ("kb0", "pad1", ...) or "" for CPUs.
+var device := "" ## Controls device ("kb0", "pad1", ...), "net" for a remote player, "" for CPUs.
+var owner := "" ## Online: the page (room peer) whose player this is; "" offline and for CPUs.
 var is_bot := false
 var skill := 0.75 ## CPU only: 0 = sleepy, 1 = sharp.
 var score := 0

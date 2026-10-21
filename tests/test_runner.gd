@@ -14,6 +14,8 @@ func _ready() -> void:
 		_unit()
 	if only == "" or only == "powerups":
 		await _powerups()
+	if only == "" or only == "lockstep":
+		await _lockstep()
 	if only == "" or only == "minigames":
 		await _minigames()
 	if only == "" or only == "match":
@@ -127,6 +129,92 @@ func _minigames() -> void:
 				print("  %-22s %d players: %5.1fs, winner group %s" % [path.get_file(), n, frames / 60.0, ranking[0].map(func(s): return s.display_name)])
 			mg.queue_free()
 			await get_tree().process_frame
+
+
+## Online play depends on every page simulating identically. Play each minigame twice
+## with the same seed and scripted inputs; the second run stalls at random frames (a
+## slow connection) and uses the 3D look. Checksums every 60 ticks must match.
+func _lockstep() -> void:
+	print("== lockstep")
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	var only_game := OS.get_environment("GAME")
+	for path in Game.MINIGAMES.filter(func(p): return only_game == "" or p.contains(only_game)):
+		var runs := []
+		var snaps := {}
+		for run in 2:
+			Game.players.clear()
+			for i in 4:
+				var slot := PlayerSlot.new(i, "" if i >= 2 else "net", i >= 2)
+				slot.owner = "" if i >= 2 else "peer%d" % i
+				slot.skill = 0.6 + 0.1 * i
+				Game.players.append(slot)
+			Game.look_3d = run == 1 and OS.get_environment("SAME_LOOK") == ""
+			Net.loopback = true
+			Net.in_match = true
+			Net.match_info = {"id": "test", "seed": 4242}
+			Net.test_input = func(slot: PlayerSlot, t: int) -> Dictionary:
+				var phase := (t / 40 + slot.id * 3) % 8
+				var a := TAU * phase / 8.0
+				return {"move": Vector2(cos(a), sin(a)), "action": (t + slot.id * 7) % 50 == 0,
+					"hold": (t / 25) % 2 == 0, "item": (t + slot.id) % 90 == 0}
+			var stall_rng := RandomNumberGenerator.new()
+			stall_rng.seed = 99
+			Net.test_stall = (func(_f: int) -> bool: return stall_rng.randf() < 0.3) if run == 1 and OS.get_environment("NO_STALL") == "" else Callable()
+			var mg: Minigame = load(path).new()
+			mg.seed_value = Net.round_seed(1)
+			mg.process_mode = Node.PROCESS_MODE_PAUSABLE # as under MatchHost in the game
+			add_child(mg)
+			mg.setup(Game.players)
+			for f in 30:
+				await get_tree().physics_frame # an "intro" of different length per run
+			if run == 1:
+				for f in 17:
+					await get_tree().physics_frame
+			# Run 1 plays the guest: it gets run 0's snapshots, as if from the host.
+			Net.test_snaps = snaps if run == 1 and OS.get_environment("NO_SNAPS") == "" else {}
+			Net.start_round(1, mg)
+			mg.begin()
+			var done := {"v": false}
+			mg.finished.connect(func(_r): done.v = true)
+			var frames := 0
+			var trace := {}
+			while not done.v and Net.tick < 1500 and frames < 6000:
+				await get_tree().physics_frame
+				frames += 1
+				if run == 0:
+					for st in Net._hist:
+						if st % Net.SYNC_EVERY == 0:
+							snaps[st] = Net._hist[st]
+				if OS.get_environment("TRACE") != "" and not trace.has(Net.tick):
+					trace[Net.tick] = str(mg.chars.map(func(c): return [c.global_position, c.velocity, c.facing, c.alive, c.stun, c.invulnerable])) + str(mg.players.map(func(p): return mg.status_text(p)))
+			if OS.get_environment("TRACE") != "":
+				if run == 0:
+					set_meta("trace", trace)
+				else:
+					var t0: Dictionary = get_meta("trace")
+					for t in range(0, 1500):
+						if t0.get(t) != trace.get(t):
+							print("    trace diverges at tick ", t, "\n      A ", t0.get(t), "\n      B ", trace.get(t), "\n    previous\n      A ", t0.get(t - 1), "\n      B ", trace.get(t - 1))
+							break
+			runs.append({"checks": Net._checks.duplicate(), "end": Net.tick, "final": Net.checksum(mg), "fixes": Net.corrections})
+			Net.end_round()
+			mg.queue_free()
+			await get_tree().process_frame
+		# Checkpoints may differ for a moment before a snapshot lands; the ending may not.
+		var same: bool = runs[0].end == runs[1].end and runs[0].final == runs[1].final
+		var off := 0
+		for t in runs[0].checks:
+			if runs[1].checks.get(t) != runs[0].checks[t]:
+				off += 1
+		check(same, "%s ends identically with stalls, either look and the host's snapshots (ended at tick %d vs %d)" % [path.get_file(), runs[0].end, runs[1].end])
+		print("  %-22s %s  (%d ticks, %d/%d checkpoints differed, %d snapshot fixes)" % [path.get_file(), "same" if same else "DIFFERENT", runs[0].end, off, runs[0].checks.size(), runs[1].fixes])
+	Net.loopback = false
+	Net.in_match = false
+	Net.test_input = Callable()
+	Net.test_stall = Callable()
+	Net.test_snaps = {}
+	Game.look_3d = false
+	Game.players.clear()
 
 
 ## Fire every item at a standing target and check it does something.

@@ -34,6 +34,7 @@ var ended := false
 var time_left := 0.0
 var elapsed := 0.0
 var rng := RandomNumberGenerator.new()
+var seed_value := 0 ## Set before setup() for a reproducible round (online play); 0 = random.
 var bot_mem := {} ## PlayerCharacter -> Dictionary scratch space for CPU brains.
 
 var _out_order: Array = [] ## Groups of PlayerSlots, in the order they were knocked out.
@@ -47,7 +48,10 @@ var _status_labels := {}
 
 func setup(p_players: Array[PlayerSlot]) -> void:
 	players = p_players
-	rng.randomize()
+	if seed_value != 0:
+		rng.seed = seed_value
+	else:
+		rng.randomize()
 	arena = Arena.new()
 	arena.theme = Themes.get_theme(theme_name if theme_name != "" else Game.next_theme())
 	add_child(arena)
@@ -111,10 +115,19 @@ func spawn_characters(points: Array[Vector3]) -> void:
 		ch.facing = Vector3(0, 0, 1)
 		ch.input_provider = _input_for
 		ch.fell.connect(_on_out)
+		ch.set_meta("spawn", ch.global_position)
 		chars.append(ch)
 
 
 func begin() -> void:
+	if Net.in_match:
+		# Lockstep starts here: put everyone back on their exact spawn point so every
+		# page begins from the same state, however long its intro took.
+		for ch in chars:
+			if ch.has_meta("spawn"):
+				ch.global_position = ch.get_meta("spawn")
+			ch.velocity = Vector3.ZERO
+			ch.knock = Vector3.ZERO
 	running = true
 	time_left = time_limit
 	for ch in chars:
@@ -219,6 +232,8 @@ func _input_for(ch: PlayerCharacter) -> Dictionary:
 				inp.action = false
 		if powerups:
 			_bot_powerups(ch, inp)
+	elif Net.in_match:
+		inp = Net.input_for(ch.slot)
 	else:
 		var dev := ch.slot.device
 		inp = {

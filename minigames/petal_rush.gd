@@ -61,8 +61,8 @@ func tick(delta: float) -> void:
 		for ch in chars:
 			if not ch.alive:
 				continue
-			var d := ch.global_position - node.global_position
-			if Vector2(d.x, d.z).length() < PICK_RADIUS and absf(d.y + 0.35) < 1.0:
+			var d: Vector3 = ch.global_position - p.pos
+			if Vector2(d.x, d.z).length() < PICK_RADIUS and absf(d.y) < 1.0:
 				scores[ch.slot] += p.value
 				Sfx.play_varied("gold" if p.value > 1 else "coin", 0.06, -4.0)
 				Fx.popup(arena, node.global_position + Vector3.UP * 0.4, "+%d" % p.value, Ui.GOLD if p.value > 1 else Color("ffd6e8"))
@@ -86,7 +86,8 @@ func on_dash_hit(_attacker: PlayerCharacter, victim: PlayerCharacter) -> void:
 
 
 func _spawn_pickup(value: int) -> void:
-	var tiles := arena.solid_tiles()
+	# Ground level only: the raised tiles are obstacles nobody can climb.
+	var tiles := arena.solid_tiles().filter(func(t): return t.level == 0)
 	for attempt in 10:
 		var t: ArenaTile = tiles[rng.randi() % tiles.size()]
 		var pos := Vector3(t.cell.x, t.top_y, t.cell.y)

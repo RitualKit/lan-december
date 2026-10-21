@@ -23,6 +23,7 @@ Touch="*res://autoload/touch.gd"
 Sfx="*res://autoload/sfx.gd"
 Controls="*res://autoload/controls.gd"
 Game="*res://autoload/game.gd"
+Net="*res://autoload/net.gd"
 
 [display]
 

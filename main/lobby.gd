@@ -11,6 +11,8 @@ var _start_t := 0.0
 var _on_swap := {} ## Characters standing on the NEW LOOK pad (each swaps once per visit).
 var _hint: Label
 var _count_label: Label
+var _starting := false
+var online: OnlinePanel
 
 
 func _init() -> void:
@@ -43,6 +45,8 @@ func build() -> void:
 	_add_pad("rounds", Vector3(3.0, 0, 1.8), 0.7, Color("7ab0ff"), "")
 	_add_pad("swap", Vector3(1.4, 0, 3.4), 0.7, Color("c88cff"), "NEW LOOK")
 	_add_pad("style", Vector3(-2.4, 0, -0.4), 0.7, Color("ffb36b"), "")
+	if Net.available:
+		_add_online_pad()
 	_update_pad_labels()
 
 	for slot in players:
@@ -106,7 +110,13 @@ func _build_hud() -> void:
 	running = true
 
 
+func _add_online_pad() -> void:
+	_add_pad("online", Vector3(2.6, 0, -0.7), 0.7, Color("6ac4e0"), "ONLINE")
+
+
 func _add_hint_labels(root: Control) -> void:
+	online = OnlinePanel.new()
+	root.add_child(online)
 	_hint = Ui.label("", 30, Color.WHITE, 10)
 	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_hint.offset_top = -64
@@ -195,6 +205,13 @@ func _leave(slot: PlayerSlot) -> void:
 
 
 func tick(delta: float) -> void:
+	if Net.available and not pads.has("online"):
+		_add_online_pad()
+	for ch in chars:
+		ch.frozen = online.is_open # The menu takes the controls while it's open.
+	if online.is_open or _starting:
+		return
+	var host_only := Net.in_game() and not Net.is_host
 	for dev in Controls.devices():
 		var slot := Game.player_for_device(dev)
 		if slot == null and Controls.just_pressed(dev, "action"):
@@ -216,6 +233,8 @@ func tick(delta: float) -> void:
 		if pad_name == "swap":
 			_swap_looks(on)
 			continue
+		if host_only and pad_name in ["bot_add", "bot_remove", "rounds"]:
+			continue
 		if on.is_empty():
 			pad.armed = true
 		elif pad.armed:
@@ -225,9 +244,11 @@ func tick(delta: float) -> void:
 				"bot_remove": _remove_bot()
 				"rounds": _cycle_rounds()
 				"style": _toggle_style()
+				"online": online.open()
 
 	var on_start := humans.filter(func(c): return _on_pad(c, pads["start"]))
-	var ready := not humans.is_empty() and on_start.size() == humans.size() and players.size() >= 2
+	var total := Net.total_players() if Net.in_game() else players.size()
+	var ready := not host_only and not humans.is_empty() and on_start.size() == humans.size() and total >= 2
 	if ready:
 		var before := _start_t
 		_start_t += delta
@@ -235,17 +256,25 @@ func tick(delta: float) -> void:
 			Sfx.play("blip", 1.0 + _start_t * 0.2)
 		pads["start"].label.text = str(int(ceil(START_HOLD - _start_t)))
 		if _start_t >= START_HOLD:
-			running = false
 			Sfx.play("go")
-			Game.start_match()
+			if Net.in_game():
+				# Everyone (this page included) starts when the match shows up in presence.
+				_starting = true
+				pads["start"].label.text = "GO!"
+				Net.host_start_match()
+			else:
+				running = false
+				Game.start_match()
 			return
 	else:
 		_start_t = 0.0
-		pads["start"].label.text = "START"
+		pads["start"].label.text = "HOST STARTS" if host_only else "START"
 
 	if humans.is_empty():
 		_hint.text = "Tap A to join!" if Touch.active else "Press SPACE, ENTER or (A) to join!"
-	elif players.size() < 2:
+	elif host_only:
+		_hint.text = "Online with game %s. The host starts the match" % Net.game_code
+	elif total < 2:
 		_hint.text = "Need 2+ players. Walk onto + CPU to add one" if Touch.active else "Need 2+ players. Grab a friend or step on + CPU"
 	elif not ready:
 		_hint.text = "Everyone stand on START to begin  (%d/%d)" % [on_start.size(), humans.size()]
