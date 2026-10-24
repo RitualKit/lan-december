@@ -48,6 +48,17 @@ Skills in `.claude/skills/` hold the longer recipes:
 - **Assets.** The network policy blocks kenney.nl, itch.io and opengameart. Use GitHub mirrors; `assets/ninja_adventure/` came from `sparklinlabs/superpowers-asset-packs`. Textures and most sounds are generated in code, and PNG/OGG files in `assets/textures/` and `assets/sfx/` override them.
 - **Commits.** Commit as the repo owner (`git config user.name "Adam Deblen"`, `user.email "Adam.deblen@intery.se"`). Keep the `Co-Authored-By: Claude ...` trailer. `main` is the default branch.
 
+## Keep the README screenshots current
+
+`docs/screenshots/<game>.jpg` feeds the README's minigame gallery. Recapture the affected images in the same PR whenever you change:
+- character sprites or 3D models
+- textures, props or themes
+- the HUD
+- how a minigame looks or plays
+- the set of minigames (adding, removing or renaming one)
+
+When art or a theme changes for every game, recapture all 13. The `screenshots` skill has the exact recipe. The PR template's screenshot checkbox covers this.
+
 ## Style
 
 GDScript uses tabs and static types. Each script starts with a `##` doc comment. Comments are short and say *why*. Match the surrounding code. Every gameplay change gets a test run: `tools/run_tests.sh`, plus `ONLY=lockstep` if it touches gameplay code.
