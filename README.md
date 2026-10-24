@@ -124,7 +124,8 @@ core/       Minigame base class, PlayerCharacter, Powerups, Arena/ArenaTile (isl
 main/       main.tscn (screen switcher + pause), lobby, online_panel, match_host (rounds/intro/results), podium
 minigames/  One script per minigame
 tests/      Headless test suite
-tools/      run_tests.sh, capture.sh (screenshots), build_web.sh, online_test.js (two browsers play online)
+tools/      setup_cloud.sh, run_tests.sh, capture.sh (screenshots), build_web.sh, phone_shot.js, online_test.js (two browsers play online)
+.claude/    skills for Claude Code (tests, screenshots, web publish, online test, new minigame, determinism)
 ```
 
 ## Adding a minigame
