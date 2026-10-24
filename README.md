@@ -60,21 +60,90 @@ How it works (`autoload/net.gd`, plus the small `LDNet` bridge in `web/lan-decem
 
 ## Minigames
 
-| Game | Goal | Button |
-|---|---|---|
-| **Petal Push** | Sumo: shove everyone into the sea while the island crumbles from the edges. | Dash |
-| **Petal Rush** | Collect blossoms (gold ones are worth 5). Dash into rivals to make them drop some. | Dash |
-| **Hot Lantern** | Hot potato: touch someone to pass the lantern before it bursts. | Dash |
-| **Crumble** | Tiles crack on your first step and fall on the second. Standing still breaks them too. Last one standing wins. | Hop |
-| **Blossom King** | Hold the moving golden circle. If it's crowded, only whoever got there first scores, at half speed. | Dash |
-| **Rockfall** | Dodge boulders that land on the red warning circles. | Dash |
-| **Paint the Isle** | Cover the most tiles in your colour. Paint bombs splash a big area. | Dash |
-| **Koi Catch** | Reaction duel: strike first when the koi bites. Pressing early locks you out for that cast. | Strike |
-| **River Run** | Cross the river three times (there, back, there) on drifting logs. Falling in sends you back to the bank you left. | Hop |
-| **Snowball Fight** | Every snowball hit is a point. Snow walls give cover. Always on Frost Peaks. | Throw |
-| **Stump Scramble** | Musical chairs: when the music stops, grab one of the stumps. There's one fewer than there are players. | Dash |
-| **Color Call** | A colour is called, and every other tile drops. Calls get faster, and later rounds add a fifth colour. | Dash |
-| **Monster Bonk** | Whack-a-mole: dash into monsters as they pop up. Gold ones are worth 3; fire spirits burn you for -2. | Dash |
+Screenshots show 4 CPU players mid-round. The word after each name is what the action button does in that game. Islands get a random theme each round, so a game can look different every time.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/petal_push.jpg" alt="Petal Push screenshot" width="100%"><br>
+<b>Petal Push</b> · <i>Dash</i><br>
+Sumo: shove everyone into the sea while the island crumbles from the edges.
+</td>
+<td width="50%" valign="top">
+<img src="docs/screenshots/petal_rush.jpg" alt="Petal Rush screenshot" width="100%"><br>
+<b>Petal Rush</b> · <i>Dash</i><br>
+Collect blossoms (gold ones are worth 5). Dash into rivals to make them drop some.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/hot_lantern.jpg" alt="Hot Lantern screenshot" width="100%"><br>
+<b>Hot Lantern</b> · <i>Dash</i><br>
+Hot potato: touch someone to pass the lantern before it bursts.
+</td>
+<td width="50%" valign="top">
+<img src="docs/screenshots/crumble.jpg" alt="Crumble screenshot" width="100%"><br>
+<b>Crumble</b> · <i>Hop</i><br>
+Tiles crack on your first step and fall on the second. Standing still breaks them too. Last one standing wins.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/blossom_king.jpg" alt="Blossom King screenshot" width="100%"><br>
+<b>Blossom King</b> · <i>Dash</i><br>
+Hold the moving golden circle. If it's crowded, only whoever got there first scores, at half speed.
+</td>
+<td width="50%" valign="top">
+<img src="docs/screenshots/rockfall.jpg" alt="Rockfall screenshot" width="100%"><br>
+<b>Rockfall</b> · <i>Dash</i><br>
+Dodge boulders that land on the red warning circles.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/paint_the_isle.jpg" alt="Paint the Isle screenshot" width="100%"><br>
+<b>Paint the Isle</b> · <i>Dash</i><br>
+Cover the most tiles in your colour. Paint bombs splash a big area.
+</td>
+<td width="50%" valign="top">
+<img src="docs/screenshots/koi_catch.jpg" alt="Koi Catch screenshot" width="100%"><br>
+<b>Koi Catch</b> · <i>Strike</i><br>
+Reaction duel: strike first when the koi bites. Pressing early locks you out for that cast.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/river_run.jpg" alt="River Run screenshot" width="100%"><br>
+<b>River Run</b> · <i>Hop</i><br>
+Cross the river three times (there, back, there) on drifting logs. Falling in sends you back to the bank you left.
+</td>
+<td width="50%" valign="top">
+<img src="docs/screenshots/snowball_fight.jpg" alt="Snowball Fight screenshot" width="100%"><br>
+<b>Snowball Fight</b> · <i>Throw</i><br>
+Every snowball hit is a point. Snow walls give cover. Always on Frost Peaks.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/stump_scramble.jpg" alt="Stump Scramble screenshot" width="100%"><br>
+<b>Stump Scramble</b> · <i>Dash</i><br>
+Musical chairs: when the music stops, grab one of the stumps. There's one fewer than there are players.
+</td>
+<td width="50%" valign="top">
+<img src="docs/screenshots/color_call.jpg" alt="Color Call screenshot" width="100%"><br>
+<b>Color Call</b> · <i>Dash</i><br>
+A colour is called, and every other tile drops. Calls get faster, and later rounds add a fifth colour.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/screenshots/monster_bonk.jpg" alt="Monster Bonk screenshot" width="100%"><br>
+<b>Monster Bonk</b> · <i>Dash</i><br>
+Whack-a-mole: dash into monsters as they pop up. Gold ones are worth 3; fire spirits burn you for -2.
+</td>
+<td width="50%"></td>
+</tr>
+</table>
 
 ## Island themes
 

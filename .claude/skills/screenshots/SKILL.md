@@ -20,6 +20,8 @@ LOOK=3d THEME=winter GAME=res://minigames/crumble.gd N=4 TIMES=4 OUT=/tmp/c tool
 - `TIMES` are seconds of game time. Each one writes `<OUT>_00.png`, `<OUT>_01.png` and so on, numbered in order.
 - `HUMAN=1` adds an idle human, so cards wait for their timeouts.
 - Look at the PNGs with the Read tool. To compare several, paste them into one grid with PIL first.
+- The README gallery images in `docs/screenshots/` were made this way, with `N=4 TIMES=3,7,12`. The best frame of each game was saved as a 960×540 JPEG (quality ~86).
+- **Update them** whenever sprites, models, textures, themes, the HUD, or a minigame's look or rules change, or when a game is added or removed. Recapture the affected games, or all 13 for a global art change, in the same PR.
 
 ## Browser build (Compatibility renderer, phones)
 
