@@ -40,4 +40,9 @@ ONLY=lockstep GAME=<name> tools/run_tests.sh    # must say "same"
 GAME=res://minigames/<name>.gd N=4 TIMES=3,10 OUT=/tmp/<name> tools/capture.sh
 ```
 
-Then add the game to the README's minigame table, and check the balance: rounds should last 20–45 s and the CPUs shouldn't always win.
+Then add the game to the README's minigame gallery:
+1. Pick a lively frame from the capture.
+2. Save it as `docs/screenshots/<name>.jpg`: 960×540, JPEG quality ~86 (PIL `resize` + `save(quality=86, optimize=True)`).
+3. Add a `<td>` cell with the image, the name, the button and a one-line goal, matching the other cells.
+
+Check the balance too: rounds should last 20–45 s and the CPUs shouldn't always win.
