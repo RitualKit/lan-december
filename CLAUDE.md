@@ -2,6 +2,31 @@
 
 A 2–8 player party game in **Godot 4.7** (GDScript). It's 5, 10 or 15 rounds of minigames on floating blossom islands, in an HD-2D style: low-poly 3D tiles with pixel textures and pixel-sprite or blocky 3D characters. Players share one screen locally, or play online across screens in the browser build on claude.ai. The README covers gameplay, controls and the project layout.
 
+## Workflow: feature branch + PR (required for every agent)
+
+`main` is protected by convention: **never commit or push to `main` directly.** Every change, however small, goes through a pull request.
+
+1. **Branch from the latest `main`:**
+   ```bash
+   git fetch origin main && git checkout -b <type>/<short-name> origin/main
+   ```
+   Pick `<type>` from `feat`, `fix`, `docs`, `chore`, `test` (e.g. `feat/music`, `fix/river-run-logs`). If the session already gave you a branch name, use that one as the feature branch, but still base it on `origin/main`.
+2. **Commit** in small, focused commits as the repo owner, keeping the `Co-Authored-By: Claude ...` trailer (see Rules below).
+3. **Verify before the PR:**
+   - `tools/run_tests.sh` must pass.
+   - Gameplay code also needs `ONLY=lockstep`.
+   - Netcode or the `LDNet` bridge also needs the `online-test` skill.
+   - Visual changes need screenshots.
+   - Update the README and skills when behaviour or workflow changes.
+4. **Push and open a PR against `main`:**
+   - Push with `git push -u origin <branch>`.
+   - Open the PR with the GitHub tools, base `main`.
+   - Fill in `.github/pull_request_template.md`: what changed, why, and how it was tested, with real results.
+5. **Don't merge your own PR** unless the user asks you to. Report the PR link to the user.
+6. **After a merge,** start the next piece of work on a new branch from the updated `origin/main`. Never stack new work on a merged branch.
+
+Publishing the playable artifact from a feature branch is fine when the user wants to try something before merging; tell them it isn't merged yet.
+
 ## Commands
 
 ```bash
@@ -46,7 +71,7 @@ Skills in `.claude/skills/` hold the longer recipes:
 - **Members of `Minigame`.** Don't name a member after a base-class signal or method (`finished`, `running`, `ended`, `players`, `chars`, `rng`, ...).
 - **Web build.** The web build uses the Compatibility renderer. `GroundMark` uses flat quads instead of decals there, and the water shader branches on `CURRENT_RENDERER`. Check visual changes in both renderers.
 - **Assets.** The network policy blocks kenney.nl, itch.io and opengameart. Use GitHub mirrors; `assets/ninja_adventure/` came from `sparklinlabs/superpowers-asset-packs`. Textures and most sounds are generated in code, and PNG/OGG files in `assets/textures/` and `assets/sfx/` override them.
-- **Commits.** Commit as the repo owner (`git config user.name "Adam Deblen"`, `user.email "Adam.deblen@intery.se"`). Keep the `Co-Authored-By: Claude ...` trailer. `main` is the default branch.
+- **Commits.** Commit as the repo owner (`git config user.name "Adam Deblen"`, `user.email "Adam.deblen@intery.se"`). Keep the `Co-Authored-By: Claude ...` trailer. `main` is the default branch, and changes reach it only through PRs (see Workflow).
 
 ## Style
 
